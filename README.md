@@ -17,6 +17,7 @@ secret project
 ```
 $ git clone https://github.com/jonsterling/tt
 $ cd tt
+$ opam update
 $ opam pin add -y .
 ```
 
