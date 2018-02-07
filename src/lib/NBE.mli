@@ -1,3 +1,6 @@
-val eval : Val.env -> Tm.chk -> Val.nf
-val read_nf : int -> Val.nf -> Val.nf -> Tm.chk
-(* val read_ne : Val.neu -> Val.nf -> Tm.chk *)
+open Tm
+open Val
+
+val eval : Env.t -> Chk.t -> NF.t
+val read_nf : int -> NF.t -> NF.t -> Chk.t
+(* val read_ne : Neu.t -> NF.t -> Chk.t *)
