@@ -1,0 +1,22 @@
+opam-version: "1.2.2"
+name: "tt"
+version: "0.0"
+maintainer: "jonsterling@users.noreply.github.com"
+authors: ["Jon Sterling"]
+homepage: "https://github.com/jonsterling/tt"
+bug-reports: "https://github.com/jonsterling/tt/issues"
+dev-repo: "https://github.com/jonsterling/tt.git"
+license: "Apache-2.0"
+depends: [
+  "cmdliner" {= "1.0.2"}
+  "fmt" {= "0.8.5"}
+  "jbuilder" {build & = "1.0+beta17"}
+  "lwt" {= "3.2.1"}
+  "menhir" {= "20171222"}
+  "ppx_deriving" {= "4.2.1"}
+  "uuseg" {= "10.0.0"}
+  "uutf" {= "1.0.1"}
+]
+build: [
+  ["./script/build"]
+]

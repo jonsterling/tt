@@ -1,0 +1,9 @@
+(jbuild_version 1)
+
+(library
+ ((name TT)
+  (public_name tt)
+  (libraries (fmt uuseg.string lwt.unix))
+  (preprocess (pps (lwt.ppx ppx_deriving.std)))))
+
+; (ocamllex (Lexer))
