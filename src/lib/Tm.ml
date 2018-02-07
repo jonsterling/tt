@@ -29,7 +29,23 @@ module rec Chk : sig
     | Dim1
     | U
   [@@deriving (eq, ord, show)]
-end = Chk
+end =
+struct
+  type t =
+    | Up of Inf.t
+    | Bool
+    | Pi of Chk.t * Chk.t Bind.t
+    | Sg of Chk.t * Chk.t Bind.t
+    | Eq of Chk.t Bind.t * Chk.t * Chk.t
+    | Lam of Chk.t Bind.t
+    | Pair of Chk.t * Chk.t
+    | Tt
+    | Ff
+    | Dim0
+    | Dim1
+    | U
+  [@@deriving (eq, ord, show)]
+end
 
 and Inf : sig
   type t =
@@ -40,4 +56,14 @@ and Inf : sig
     | If of Chk.t Bind.t * Inf.t * Chk.t * Chk.t
     | Down of Chk.t * Chk.t
   [@@deriving (eq, ord, show)]
-end = Inf
+end =
+struct
+  type t =
+    | V of Idx.t
+    | App of Inf.t * Chk.t
+    | Proj1 of Inf.t
+    | Proj2 of Inf.t
+    | If of Chk.t Bind.t * Inf.t * Chk.t * Chk.t
+    | Down of Chk.t * Chk.t
+  [@@deriving (eq, ord, show)]
+end
