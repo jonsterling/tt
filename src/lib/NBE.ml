@@ -49,7 +49,6 @@ and read_nf n ty k =
     let app = apply k atom in
     let body = read_nf (n + 1) cod app in
     Chk.Lam (Bind.Mk body)
-  | NF.Bool -> failwith ""
   | NF.U -> read_ty n k
   | _ ->
     begin match k with
