@@ -19,7 +19,24 @@ module rec NF : sig
     | Dim1
     | Up of Neu.t Ann.t
   [@@deriving (eq, ord, show)]
-end = NF
+end =
+struct
+  type t =
+    | Lam of Clo.t
+    | Pair of NF.t * NF.t
+    | Pi of NF.t * Clo.t
+    | Sg of NF.t * Clo.t
+    | Eq of Clo.t * NF.t * NF.t
+    | Bool
+    | Tt
+    | Ff
+    | U
+    | EDim
+    | Dim0
+    | Dim1
+    | Up of Neu.t Ann.t
+  [@@deriving (eq, ord, show)]
+end
 
 and Neu : sig
   type t =
@@ -29,19 +46,40 @@ and Neu : sig
     | App of Neu.t * NF.t Ann.t
     | If of Clo.t * Neu.t * NF.t * NF.t
   [@@deriving (eq, ord, show)]
-end = Neu
+end = 
+struct
+  type t =
+    | Atom of Lvl.t
+    | Proj1 of Neu.t
+    | Proj2 of Neu.t
+    | App of Neu.t * NF.t Ann.t
+    | If of Clo.t * Neu.t * NF.t * NF.t
+  [@@deriving (eq, ord, show)]
+end
 
 and Env : sig
   type t = NF.t list
   [@@deriving (eq, ord, show)]
-end = Env
+end =
+struct
+  type t = NF.t list
+  [@@deriving (eq, ord, show)]
+end
 
 and Ann : sig
   type 'a t = Mk of 'a * NF.t
   [@@deriving (eq, ord, show)]
-end = Ann
+end = 
+struct
+  type 'a t = Mk of 'a * NF.t
+  [@@deriving (eq, ord, show)]
+end
 
 and Clo : sig
    type t = Mk of Tm.Chk.t Tm.Bind.t * Env.t
    [@@deriving (eq, ord, show)]
-end = Clo
+end = 
+struct
+   type t = Mk of Tm.Chk.t Tm.Bind.t * Env.t
+   [@@deriving (eq, ord, show)]
+end
