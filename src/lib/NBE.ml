@@ -129,6 +129,8 @@ and if_ (bnd, rho) vb vt vf =
   match vb with
   | Val.Tt -> vt
   | Val.Ff -> vf
-  | Val.Up (Val.Ann (r, _)) ->
-    Val.Up (Val.Ann (Val.If (Val.Clo (bnd, rho), r, vt, vf), failwith ""))
+  | Val.Up (Val.Ann (r, o)) ->
+    let Tm.Bind.Mk tty = bnd in
+    let ty = eval (vb :: rho) tty in
+    Val.Up (Val.Ann (Val.If (Val.Clo (bnd, rho), r, vt, vf), ty))
   | _ -> failwith "if_"
