@@ -84,7 +84,6 @@ and read_ty n k =
   | Val.U -> Tm.U
   | _ -> failwith ""
 
-
 and read_neu n r =
   match r with
   | Val.Atom lvl -> Tm.V (lvl_to_idx n lvl)
