@@ -105,7 +105,11 @@ struct
       let pi2 = read_nf n cod (proj2 k) in
       Tm.Pair (pi1, pi2)
     | Val.Eq (Val.Clo (Tm.B bnd, rho), v0, v1) ->
-      failwith ""
+      let atom = Val.Up (Val.Ann (Val.Atom (Val.Lvl n), Val.EDim)) in
+      let cod = eval (atom :: rho) bnd in
+      let app = apply k atom in
+      let body = read_nf (n + 1) cod app in
+      Tm.Lam (Tm.B body)
     | Val.Bool -> failwith ""
     | Val.U -> read_ty n k
     | _ ->
