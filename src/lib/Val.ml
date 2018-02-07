@@ -17,6 +17,7 @@ type nf =
   | Dim0
   | Dim1
   | Up of neu ann
+  | Coe of (nf * nf) * clo * nf
   [@@deriving (eq, ord, show)]
 
 and neu =

@@ -1,3 +1,9 @@
+
+(* Thoughts: the 'coe' operator is really a kind of eta expansion, so it needs to be performed
+   during readback together with other kinds of eta expansion (for instance, functions are eta
+   expanded in the case for Pi in read_nf).
+ *)
+
 let lvl_to_idx n (Val.Lvl.Mk i) =
   Tm.Idx.Mk (n - (i + 1))
 
@@ -25,37 +31,65 @@ and eval_neu rho r =
   | Tm.Down (t, ty) -> eval rho t
   | Tm.If (bnd, tb, tt, tf) ->
     if_ (bnd, rho) (eval_neu rho tb) (eval rho tt) (eval rho tf)
+  | Tm.Coe ((i0, i1), bnd, t) ->
+    let vi0 = eval rho i0 in
+    let vi1 = eval rho i1 in
+    Val.Coe ((vi0, vi1), Val.Clo (bnd, rho), eval rho t)
 
-and read_nf n ty k =
-  match ty with
-  | Val.Pi (a, Val.Clo (Tm.Bind.Mk t, rho)) ->
-    let atom = Val.Up (Val.Ann (Val.Atom (Val.Lvl.Mk n), a)) in
-    let cod = eval (atom :: rho) t in
-    let app = apply k atom in
-    let body = read_nf (n + 1) cod app in
-    Tm.Lam (Tm.Bind.Mk body)
-  | Val.Sg (a, Val.Clo (Tm.Bind.Mk t, rho)) ->
-    let vpi1 = proj1 k in
-    let pi1 = read_nf n a vpi1 in
-    let cod = eval (vpi1 :: rho) t in
-    let pi2 = read_nf n cod (proj2 k) in
-    Tm.Pair (pi1, pi2)
-  | Val.Eq (Val.Clo (Tm.Bind.Mk bnd, rho), v0, v1) ->
+  (* | Val.Coe ((i0, i1), Val.Clo (Tm.Bind.Mk ty, rho), v) ->
     let atom = Val.Up (Val.Ann (Val.Atom (Val.Lvl.Mk n), Val.EDim)) in
-    let cod = eval (atom :: rho) bnd in
-    let app = apply k atom in
-    let body = read_nf (n + 1) cod app in
-    Tm.Lam (Tm.Bind.Mk body)
-  | Val.U -> read_ty n k
+    let vty = eval (atom :: rho) ty in
+    begin match vty with
+    | Val.Pi (dom, Val.Clo (tcod, rho)) -> failwith ""
+    | Val.Bool -> read_nf n vty1 v
+    | _ -> failwith "coe"
+    end *)
+and read_nf n ty k =
+  match k with
+  | Val.Coe ((i0, i1), clo, v) -> read_coe n ((i0, i1), clo, v)
   | _ ->
-    begin match k with
-      | Val.Tt -> Tm.Tt
-      | Val.Ff -> Tm.Ff
-      | Val.Dim0 -> Tm.Dim0
-      | Val.Dim1 -> Tm.Dim1
-      | Val.Up (Val.Ann (r, _)) -> Tm.Up (read_neu n r)
-      | _ -> failwith "read_nf"
-    end
+    begin match ty with
+    | Val.Pi (a, Val.Clo (Tm.Bind.Mk t, rho)) ->
+      let atom = Val.Up (Val.Ann (Val.Atom (Val.Lvl.Mk n), a)) in
+      let cod = eval (atom :: rho) t in
+      let app = apply k atom in
+      let body = read_nf (n + 1) cod app in
+      Tm.Lam (Tm.Bind.Mk body)
+    | Val.Sg (a, Val.Clo (Tm.Bind.Mk t, rho)) ->
+      let vpi1 = proj1 k in
+      let pi1 = read_nf n a vpi1 in
+      let cod = eval (vpi1 :: rho) t in
+      let pi2 = read_nf n cod (proj2 k) in
+      Tm.Pair (pi1, pi2)
+    | Val.Eq (Val.Clo (Tm.Bind.Mk bnd, rho), v0, v1) ->
+      let atom = Val.Up (Val.Ann (Val.Atom (Val.Lvl.Mk n), Val.EDim)) in
+      let cod = eval (atom :: rho) bnd in
+      let app = apply k atom in
+      let body = read_nf (n + 1) cod app in
+      Tm.Lam (Tm.Bind.Mk body)
+    | Val.U -> read_ty n k
+    | _ ->
+      begin match k with
+        | Val.Tt -> Tm.Tt
+        | Val.Ff -> Tm.Ff
+        | Val.Dim0 -> Tm.Dim0
+        | Val.Dim1 -> Tm.Dim1
+        | Val.Up (Val.Ann (r, _)) -> Tm.Up (read_neu n r)
+        | _ -> failwith "read_nf"
+      end
+  end
+
+and read_coe n ((i0, i1), Val.Clo (Tm.Bind.Mk ty, rho), v) =
+  let atom = Val.Up (Val.Ann (Val.Atom (Val.Lvl.Mk n), Val.EDim)) in
+  let vty = eval (atom :: rho) ty in
+  let vty0 = eval (i0 :: rho) ty in
+  begin match vty with
+  | Val.Pi (dom, Val.Clo (tcod, rho)) -> failwith "todo"
+  | Val.Sg (dom, Val.Clo (tcod, rho)) -> failwith "todo"
+  | Val.Bool -> read_nf n vty0 v
+  | Val.U -> read_nf n vty0 v
+  | _ -> failwith "coe"
+  end
 
 and read_ty n k =
   match k with
@@ -82,6 +116,7 @@ and read_ty n k =
     Tm.Eq (Tm.Bind.Mk dom, t0, t1)
   | Val.Bool -> Tm.Bool
   | Val.U -> Tm.U
+  | Val.Coe ((i0, i1), clo, v) -> read_coe n ((i0, i1), clo, v)
   | _ -> failwith ""
 
 and read_neu n r =

@@ -27,12 +27,13 @@ type chk =
   | Dim0
   | Dim1
   | U
-  [@@deriving (eq, ord, show)]  
-and inf = 
+  [@@deriving (eq, ord, show)]
+and inf =
   | V of Idx.t
   | App of inf * chk
   | Proj1 of inf
   | Proj2 of inf
   | If of chk Bind.t * inf * chk * chk
+  | Coe of (chk * chk) * chk Bind.t * chk
   | Down of chk * chk
   [@@deriving (eq, ord, show)]
