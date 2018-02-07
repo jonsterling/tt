@@ -1,0 +1,3 @@
+#!/bin/sh
+opam config exec jbuilder -- utop src/lib
+
