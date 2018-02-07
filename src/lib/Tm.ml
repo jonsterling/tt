@@ -14,30 +14,25 @@ end
    - join: equate boundary-compatible equations
 *)
 
-module rec Chk : sig
-  type t =
-    | Up of Inf.t
-    | Bool
-    | Pi of Chk.t * Chk.t Bind.t
-    | Sg of Chk.t * Chk.t Bind.t
-    | Eq of Chk.t Bind.t * Chk.t * Chk.t
-    | Lam of Chk.t Bind.t
-    | Pair of Chk.t * Chk.t
-    | Tt
-    | Ff
-    | Dim0
-    | Dim1
-    | U
+type chk =
+  | Up of inf
+  | Bool
+  | Pi of chk * chk Bind.t
+  | Sg of chk * chk Bind.t
+  | Eq of chk Bind.t * chk * chk
+  | Lam of chk Bind.t
+  | Pair of chk * chk
+  | Tt
+  | Ff
+  | Dim0
+  | Dim1
+  | U
+  [@@deriving (eq, ord, show)]  
+and inf = 
+  | V of Idx.t
+  | App of inf * chk
+  | Proj1 of inf
+  | Proj2 of inf
+  | If of chk Bind.t * inf * chk * chk
+  | Down of chk * chk
   [@@deriving (eq, ord, show)]
-end = Chk
-
-and Inf : sig
-  type t =
-    | V of Idx.t
-    | App of Inf.t * Chk.t
-    | Proj1 of Inf.t
-    | Proj2 of Inf.t
-    | If of Chk.t Bind.t * Inf.t * Chk.t * Chk.t
-    | Down of Chk.t * Chk.t
-  [@@deriving (eq, ord, show)]
-end = Inf
