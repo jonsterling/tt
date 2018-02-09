@@ -12,7 +12,7 @@ secret project
 | OCaml        | `>=` | [`4.06.0`](https://github.com/ocaml/ocaml/releases/tag/4.06.0) | `opam switch 4.06.0`            |
 | utop         | `>=` | [`2.0.2`](https://github.com/diml/utop/releases/tag/2.0.2)     | `opam install utop` (optional)  |
 
-### Building
+### Installing Dependencies
 
 ```
 $ git clone https://github.com/jonsterling/tt
@@ -21,10 +21,16 @@ $ opam update
 $ opam pin add -y .
 ```
 
+### Building
+
+```
+$ make
+```
+
 ### Toplevel
 
 Requires `utop` (see prerequisites).
 
 ```
-$ ./script/top
+$ make top
 ```
