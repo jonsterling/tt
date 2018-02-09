@@ -40,3 +40,4 @@ and subst =
   | Wk
   | Cmp of subst * subst
   | Ext of subst * chk
+  [@@deriving (eq, ord, show)]
