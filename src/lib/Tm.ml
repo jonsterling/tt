@@ -30,7 +30,7 @@ and inf =
   | Proj1 of inf
   | Proj2 of inf
   | If of chk Bind.t * inf * chk * chk
-  | Coe of (chk * chk) * chk Bind.t * chk
+  (* | Coe of (chk * chk) * chk Bind.t * chk *)
   | Down of chk * chk
   [@@deriving (eq, ord, show)]
 and subst =
