@@ -7,7 +7,7 @@
       "label": "build",
       "type": "shell",
       "group": "build",
-      "command": "./script/build",
+      "command": "make",
       "problemMatcher": ["$ocamlc"],
       "presentation": {
         "echo": false,
@@ -20,7 +20,7 @@
       "label": "clean",
       "type": "shell",
       "group": "build",
-      "command": "./script/clean",
+      "command": "make clean",
       "problemMatcher": ["$ocamlc"],
       "presentation": {
         "echo": false,
@@ -33,7 +33,7 @@
       "label": "top",
       "type": "shell",
       "group": "build",
-      "command": "./script/top",
+      "command": "make top",
       "problemMatcher": ["$ocamlc"],
       "presentation": {
         "echo": false,
