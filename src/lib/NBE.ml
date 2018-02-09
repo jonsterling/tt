@@ -13,25 +13,25 @@ let rec eval rho t =
   | Tm.Ff -> D.Ff
   | Tm.Dim0 -> D.Dim0
   | Tm.Dim1 -> D.Dim1
-  | Tm.Up t -> eval_neu rho t
+  | Tm.Up t -> eval_inf rho t
   | Tm.Sub (t, s) ->
     let rho' = eval_sub rho s in
     eval rho' t
 
-and eval_neu rho t =
+and eval_inf rho t =
   match t with
   | Tm.Var -> List.hd rho
   | Tm.App (t1, t2) ->
-    let d1 = eval_neu rho t1 in
+    let d1 = eval_inf rho t1 in
     let d2 = eval rho t2 in
     apply d1 d2
   | Tm.Proj1 t ->
-    proj1 (eval_neu rho t)
+    proj1 (eval_inf rho t)
   | Tm.Proj2 t ->
-    proj2 (eval_neu rho t)
+    proj2 (eval_inf rho t)
   | Tm.If (bnd, tb, t1, t2) ->
     let mot = D.Clo (bnd, rho) in
-    let db = eval_neu rho tb in
+    let db = eval_inf rho tb in
     let d1 = eval rho t1 in
     let d2 = eval rho t2 in
     if_ mot db d1 d2
@@ -102,3 +102,5 @@ and if_ mot db d1 d2 =
     let cond = D.If (mot, dne, dnf1, dnf2) in
     D.Up (mot', cond)
   | _ -> failwith "if: something we can case on"
+
+and quo_nf n dnf = failwith "todo: quo_nf"

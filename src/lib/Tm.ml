@@ -24,7 +24,7 @@ type chk =
   | Dim0
   | Dim1
   | U
-  | Sub of chk * subst
+  | Sub of chk * sub
   [@@deriving (eq, ord, show)]
 and inf =
   | Var
@@ -35,9 +35,9 @@ and inf =
   (* | Coe of (chk * chk) * chk Bind.t * chk *)
   | Down of chk * chk
   [@@deriving (eq, ord, show)]
-and subst =
+and sub =
   | Id
   | Wk
-  | Cmp of subst * subst
-  | Ext of subst * chk
+  | Cmp of sub * sub
+  | Ext of sub * chk
   [@@deriving (eq, ord, show)]
