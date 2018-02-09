@@ -2,7 +2,7 @@ OPAM=opam
 EXEC=${OPAM} config exec
 DUNE=${EXEC} jbuilder --
 
-.PHONY: all build clean run top
+.PHONY: all build clean top
 
 all: build
 
