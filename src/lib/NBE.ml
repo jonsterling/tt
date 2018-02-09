@@ -14,7 +14,7 @@ let rec eval rho t =
   | Tm.Dim0 -> D.Dim0
   | Tm.Dim1 -> D.Dim1
   | Tm.Up t -> eval_inf rho t
-  | Tm.Sub (t, s) ->
+  | Tm.ChkSub (t, s) ->
     let rho' = eval_sub rho s in
     eval rho' t
 
@@ -37,6 +37,9 @@ and eval_inf rho t =
     if_ mot db d1 d2
   | Tm.Down (_, tm) ->
     eval rho tm
+  | Tm.InfSub (t, s) ->
+    let rho' = eval_sub rho s in
+    eval_inf rho' t
 
 and eval_sub rho s =
   match s with
@@ -143,8 +146,19 @@ let rec quo_nf n dnf =
   | _, D.Ff -> Tm.Ff
   | _, D.Dim0 -> Tm.Dim0
   | _, D.Dim1 -> Tm.Dim1
-  | _, D.Up (_, dne) -> quo_ne n dne
+  | _, D.Up (ty, dne) -> Tm.Up (quo_neu n dne)
   | _, _ -> failwith "quo_nf"
 
-
-and quo_ne n dne = failwith "todo"
+and quo_neu n dne =
+  match dne with
+  | D.Atom k -> Tm.var (n - (k + 1))
+  | D.App (d1, d2) -> Tm.App (quo_neu n d1, quo_nf n d2)
+  | D.Proj1 d -> Tm.Proj1 (quo_neu n d)
+  | D.Proj2 d -> Tm.Proj2 (quo_neu n d)
+  | D.If (mot, db, d1, d2) ->
+    let atom = D.Up (D.Bool, D.Atom n) in
+    let tmot = quo_nf (n + 1) (D.Down (D.U, apply mot atom)) in
+    let tb = quo_neu n db in
+    let t1 = quo_nf n d1 in
+    let t2 = quo_nf n d2 in
+    Tm.If (Tm.Bind.Mk tmot, tb, t1, t2)

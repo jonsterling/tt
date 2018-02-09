@@ -24,7 +24,7 @@ type chk =
   | Dim0
   | Dim1
   | U
-  | Sub of chk * sub
+  | ChkSub of chk * sub
   [@@deriving (eq, ord, show)]
 and inf =
   | Var
@@ -34,6 +34,7 @@ and inf =
   | If of chk Bind.t * inf * chk * chk
   (* | Coe of (chk * chk) * chk Bind.t * chk *)
   | Down of chk * chk
+  | InfSub of inf * sub
   [@@deriving (eq, ord, show)]
 and sub =
   | Id
@@ -41,3 +42,11 @@ and sub =
   | Cmp of sub * sub
   | Ext of sub * chk
   [@@deriving (eq, ord, show)]
+
+let var i =
+  let rec s j =
+  begin match j with
+  | 0 -> Id
+  | n -> Cmp (Wk, s n)
+  end in
+  InfSub (Var, s i)
