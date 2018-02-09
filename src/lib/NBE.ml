@@ -117,6 +117,11 @@ and quo_nf n dnf =
     let t1 = quo_nf n (D.Down (dom, d1)) in
     let t2 = quo_nf n (D.Down (apply cod d1, d2)) in
     Tm.Pair (t1, t2)
+  | D.Eq (cod, d1, d2) ->
+    let atom = D.Up (D.EDim, D.Atom n) in
+    let app = D.Down (apply cod atom, apply d atom) in
+    let body = quo_nf (n + 1) app in
+    Tm.Lam (Tm.Bind.Mk body)
   | D.U -> failwith "todo: quo_nf in universe"
   | _ ->
     begin match d with
