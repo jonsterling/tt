@@ -1,33 +1,18 @@
-module Lvl = struct
-  type t = Mk of int
-  [@@deriving (eq, ord, show)]
-end
-
-type nf =
-  | Lam of clo
-  | Pair of nf * nf
-  | Pi of nf * clo
-  | Sg of nf * clo
-  | Eq of clo * nf * nf
+type d =
+  | Clo of Tm.chk Tm.Bind.t * env
+  | Up of d * dne
   | Bool
-  | Tt
-  | Ff
-  | U
-  | EDim
-  | Dim0
-  | Dim1
-  | Up of neu ann
-  | Coe of (nf * nf) * clo * nf
-  [@@deriving (eq, ord, show)]
+  | Pi of d * d
+  | Sg of d * d
+  | Pair of d * d
 
-and neu =
-  | Atom of Lvl.t
-  | Proj1 of neu
-  | Proj2 of neu
-  | App of neu * nf ann
-  | If of clo * neu * nf * nf
-  [@@deriving (eq, ord, show)]
+and dne =
+  | Atom of int
+  | App of dne * dnf
+  | Proj1 of dne
+  | Proj2 of dne
 
-and env = nf list [@@deriving (eq, ord, show)]
-and 'a ann = Ann of 'a * nf [@@deriving (eq, ord, show)]
-and clo = Clo of Tm.chk Tm.Bind.t * env [@@deriving (eq, ord, show)]
+and dnf =
+  | Down of d * d
+
+and env = d list

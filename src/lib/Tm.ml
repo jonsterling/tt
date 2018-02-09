@@ -1,8 +1,3 @@
-module Idx = struct
-  type t = Mk of int
-  [@@deriving (eq, ord, show)]
-end
-
 module Bind = struct
   type 'a t = Mk of 'a
   [@@deriving (eq, ord, show)]
@@ -27,9 +22,10 @@ type chk =
   | Dim0
   | Dim1
   | U
+  | Sub of chk * subst
   [@@deriving (eq, ord, show)]
 and inf =
-  | V of Idx.t
+  | Var
   | App of inf * chk
   | Proj1 of inf
   | Proj2 of inf
@@ -37,3 +33,8 @@ and inf =
   | Coe of (chk * chk) * chk Bind.t * chk
   | Down of chk * chk
   [@@deriving (eq, ord, show)]
+and subst =
+  | Id
+  | Wk
+  | Cmp of subst * subst
+  | Ext of subst * chk
