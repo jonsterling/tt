@@ -105,29 +105,46 @@ and if_ mot db d1 d2 =
 
 and quo_nf n dnf =
   let D.Down (dty, d) = dnf in
-  match dty with
-  | D.Pi (dom, cod) ->
+  match dty, d with
+  | D.Pi (dom, cod), _ ->
     let atom = D.Up (dom, D.Atom n) in
     let app = D.Down (apply cod atom, apply d atom) in
     let body = quo_nf (n + 1) app in
     Tm.Lam (Tm.Bind.Mk body)
-  | D.Sg (dom, cod) ->
+  | D.Sg (dom, cod), _ ->
     let d1 = proj1 d in
     let d2 = proj2 d in
     let t1 = quo_nf n (D.Down (dom, d1)) in
     let t2 = quo_nf n (D.Down (apply cod d1, d2)) in
     Tm.Pair (t1, t2)
-  | D.Eq (cod, d1, d2) ->
+  | D.Eq (cod, d1, d2), _ ->
     let atom = D.Up (D.EDim, D.Atom n) in
     let app = D.Down (apply cod atom, apply d atom) in
     let body = quo_nf (n + 1) app in
     Tm.Lam (Tm.Bind.Mk body)
-  | D.U -> failwith "todo: quo_nf in universe"
-  | _ ->
-    begin match d with
-    | D.Up (_, dne) -> quo_ne n dne
-    | _ -> failwith "quo_nf"
-    end
+  | _, D.U -> Tm.U
+  | univ, D.Pi (dom, cod) ->
+    let tdom = quo_nf n (D.Down (univ, dom)) in
+    let atom = D.Up (dom, D.Atom n) in
+    let tcod = quo_nf (n + 1) (D.Down (univ, apply cod atom)) in
+    Tm.Pi (tdom, Tm.Bind.Mk tcod)
+  | univ, D.Sg (dom, cod) ->
+    let tdom = quo_nf n (D.Down (univ, dom)) in
+    let atom = D.Up (dom, D.Atom n) in
+    let tcod = quo_nf (n + 1) (D.Down (univ, apply cod atom)) in
+    Tm.Sg (tdom, Tm.Bind.Mk tcod)
+  | univ, D.Eq (cod, d1, d2) ->
+    let atom = D.Up (D.EDim, D.Atom n) in
+    let tcod = quo_nf (n + 1) (D.Down (univ, apply cod atom)) in
+    let t1 = quo_nf n (D.Down (apply cod D.Dim0, d1)) in
+    let t2 = quo_nf n (D.Down (apply cod D.Dim1, d2)) in
+    Tm.Eq (Tm.Bind.Mk tcod, t1, t2)
+  | _, D.Tt -> Tm.Tt
+  | _, D.Ff -> Tm.Ff
+  | _, D.Dim0 -> Tm.Dim0
+  | _, D.Dim1 -> Tm.Dim1
+  | _, D.Up (_, dne) -> quo_ne n dne
+  | _, _ -> failwith "quo_nf"
 
 
 and quo_ne n dne = failwith "todo"
