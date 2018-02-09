@@ -103,4 +103,26 @@ and if_ mot db d1 d2 =
     D.Up (mot', cond)
   | _ -> failwith "if: something we can case on"
 
-and quo_nf n dnf = failwith "todo: quo_nf"
+and quo_nf n dnf =
+  let D.Down (dty, d) = dnf in
+  match dty with
+  | D.Pi (dom, cod) ->
+    let atom = D.Up (dom, D.Atom n) in
+    let app = D.Down (apply cod atom, apply d atom) in
+    let body = quo_nf (n + 1) app in
+    Tm.Lam (Tm.Bind.Mk body)
+  | D.Sg (dom, cod) ->
+    let d1 = proj1 d in
+    let d2 = proj2 d in
+    let t1 = quo_nf n (D.Down (dom, d1)) in
+    let t2 = quo_nf n (D.Down (apply cod d1, d2)) in
+    Tm.Pair (t1, t2)
+  | D.U -> failwith "todo: quo_nf in universe"
+  | _ ->
+    begin match d with
+    | D.Up (_, dne) -> quo_ne n dne
+    | _ -> failwith "quo_nf"
+    end
+
+
+and quo_ne n dne = failwith "todo"
