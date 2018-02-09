@@ -103,7 +103,7 @@ and if_ mot db d1 d2 =
     D.Up (mot', cond)
   | _ -> failwith "if: something we can case on"
 
-and quo_nf n dnf =
+let rec quo_nf n dnf =
   let D.Down (dty, d) = dnf in
   match dty, d with
   | D.Pi (dom, cod), _ ->
