@@ -4,7 +4,14 @@ type d =
   | Bool
   | Pi of d * d
   | Sg of d * d
+  | Eq of d * d * d
+  | EDim
+  | U
   | Pair of d * d
+  | Tt
+  | Ff
+  | Dim0
+  | Dim1
 
 and dne =
   | Atom of int
