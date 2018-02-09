@@ -30,7 +30,11 @@ and eval_neu rho t =
   | Tm.Proj2 t ->
     proj2 (eval_neu rho t)
   | Tm.If (bnd, tb, t1, t2) ->
-    failwith "todo: Tm.if"
+    let mot = D.Clo (bnd, rho) in
+    let db = eval_neu rho tb in
+    let d1 = eval rho t1 in
+    let d2 = eval rho t2 in
+    if_ mot db d1 d2
   | Tm.Down (_, tm) ->
     eval rho tm
 
@@ -86,3 +90,15 @@ and proj2 d =
     | _ -> failwith "proj2/up: unexpected type"
     end
   | _ -> failwith "proj2: not projectible"
+
+and if_ mot db d1 d2 =
+  match db with
+  | D.Tt -> d1
+  | D.Ff -> d2
+  | D.Up (_, dne) ->
+    let mot' = apply mot db in
+    let dnf1 = D.Down (apply mot D.Tt, d1) in
+    let dnf2 = D.Down (apply mot D.Ff, d2) in
+    let cond = D.If (mot, dne, dnf1, dnf2) in
+    D.Up (mot', cond)
+  | _ -> failwith "if: something we can case on"

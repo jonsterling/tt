@@ -18,6 +18,7 @@ and dne =
   | App of dne * dnf
   | Proj1 of dne
   | Proj2 of dne
+  | If of d * dne * dnf * dnf
 
 and dnf =
   | Down of d * d
