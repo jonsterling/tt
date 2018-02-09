@@ -1,3 +1,7 @@
+(* We treat the semantic domain as a partial applicative structure, interpreting binding forms directly as closures.
+   The meaning of variables is "atoms" or indeterminate constants, which are structured a De Bruijn Levels (not indices).
+ *)
+
 type d =
   | Clo of Tm.chk Tm.Bind.t * env
   | Up of d * dne

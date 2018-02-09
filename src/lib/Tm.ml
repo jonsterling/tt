@@ -9,6 +9,8 @@ end
    - join: equate boundary-compatible equations
 *)
 
+(* We define terms in explicit substitutions style; this is essential for an efficient evaluator
+   and an efficient typechecker. *)
 type chk =
   | Up of inf
   | Bool
