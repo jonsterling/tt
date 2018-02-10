@@ -11,12 +11,14 @@ end
 
 type chk =
   | Up of inf
+  | Unit
   | Bool
   | Pi of chk * chk Bind.t
   | Sg of chk * chk Bind.t
   | Eq of chk Bind.t * chk * chk
   | Lam of chk Bind.t
   | Pair of chk * chk
+  | Ax
   | Tt
   | Ff
   | Dim0

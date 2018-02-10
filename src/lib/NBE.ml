@@ -6,9 +6,11 @@ let rec eval rho t =
   | Tm.Sg (dom, cod) -> D.Sg (eval rho dom, D.Clo (cod, rho))
   | Tm.Eq (cod, t1, t2) -> D.Eq (D.Clo (cod, rho), eval rho t1, eval rho t2)
   | Tm.U -> D.U
+  | Tm.Unit -> D.Unit
   | Tm.Bool -> D.Bool
   | Tm.Lam bnd -> D.Clo (bnd, rho)
   | Tm.Pair (t1, t2) -> D.Pair (eval rho t1, eval rho t2)
+  | Tm.Ax -> D.Ax
   | Tm.Tt -> D.Tt
   | Tm.Ff -> D.Ff
   | Tm.Dim0 -> D.Dim0
@@ -137,6 +139,7 @@ let rec quo_nf n dnf =
     let app = D.Down (apply cod atom, apply d atom) in
     let body = quo_nf (n + 1) app in
     Tm.Lam (Tm.Bind.Mk body)
+  | D.Unit, _ -> Tm.Ax
   | _, D.U -> Tm.U
   | univ, D.Pi (dom, cod) ->
     let tdom = quo_nf n (D.Down (univ, dom)) in

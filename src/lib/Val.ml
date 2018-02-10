@@ -5,6 +5,7 @@
 type d =
   | Clo of Tm.chk Tm.Bind.t * env
   | Up of d * dne
+  | Unit
   | Bool
   | Pi of d * d
   | Sg of d * d
@@ -12,6 +13,7 @@ type d =
   | EDim
   | U
   | Pair of d * d
+  | Ax
   | Tt
   | Ff
   | Dim0
