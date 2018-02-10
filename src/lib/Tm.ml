@@ -45,10 +45,7 @@ type ctx =
   | CNil
   | CExt of ctx * chk
 
-let var i =
-  let rec s j =
-  begin match j with
-  | 0 -> Id
-  | n -> Cmp (Wk, s n)
-  end in
-  InfSub (Var, s i)
+let rec var i =
+  match i with
+  | 0 -> Var
+  | n -> InfSub (var (n - 1), Wk)
