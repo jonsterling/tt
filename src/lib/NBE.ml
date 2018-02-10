@@ -106,6 +106,18 @@ and if_ mot db d1 d2 =
     D.Up (mot', cond)
   | _ -> failwith "if: something we can case on"
 
+let rec eval_ctx_aux cx =
+  match cx with
+  | Tm.CNil -> 0, []
+  | Tm.CExt (cx, ty) ->
+    let (n, rho) = eval_ctx_aux cx in
+    let dty = eval rho ty in
+    let atom = D.Up (dty, D.Atom n) in
+    (n + 1, atom :: rho)
+
+let eval_ctx cx =
+  snd (eval_ctx_aux cx)
+
 let rec quo_nf n dnf =
   let D.Down (dty, d) = dnf in
   match dty, d with
@@ -162,3 +174,10 @@ and quo_neu n dne =
     let t1 = quo_nf n d1 in
     let t2 = quo_nf n d2 in
     Tm.If (Tm.Bind.Mk tmot, tb, t1, t2)
+
+
+let nbe cx ~tm ~ty =
+  let n, rho = eval_ctx_aux cx in
+  let dty = eval rho ty in
+  let dtm = eval rho tm in
+  quo_nf n (D.Down (dty, dtm))

@@ -9,8 +9,6 @@ end
    - join: equate boundary-compatible equations
 *)
 
-(* We define terms in explicit substitutions style; this is essential for an efficient evaluator
-   and an efficient typechecker. *)
 type chk =
   | Up of inf
   | Bool
@@ -42,6 +40,10 @@ and sub =
   | Cmp of sub * sub
   | Ext of sub * chk
   [@@deriving (eq, ord, show)]
+
+type ctx =
+  | CNil
+  | CExt of ctx * chk
 
 let var i =
   let rec s j =
