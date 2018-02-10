@@ -1,17 +1,19 @@
 
 module Ex1 =
 struct
+  open Tm
+
   let tm =
-    Tm.Lam (Tm.Bind.Mk (Tm.Up Tm.Var))
+    Lam (Bind.Mk (Up Var))
 
   let ty =
-    Tm.Pi (Tm.Unit, Tm.Bind.Mk Tm.Unit)
+    Pi (Unit, Bind.Mk Unit)
 
   let nf =
-    NBE.nbe Tm.CNil ~tm:tm ~ty:ty
+    NBE.nbe CNil ~tm:tm ~ty:ty
 
   let expected =
-    Tm.Lam (Tm.Bind.Mk Tm.Ax)
+    Lam (Bind.Mk Ax)
 
   let test =
     if Tm.equal_chk nf expected then () else failwith "test failed"
