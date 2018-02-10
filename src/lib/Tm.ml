@@ -47,7 +47,13 @@ type ctx =
   | CNil
   | CExt of ctx * chk
 
-let rec var i =
+
+let rec weak n =
+  match n with
+  | 0 -> Wk
+  | n -> Cmp (weak (n - 1), Wk)
+
+let var i =
   match i with
   | 0 -> Var
-  | n -> InfSub (var (n - 1), Wk)
+  | n -> InfSub (Var, weak (n - 1))
