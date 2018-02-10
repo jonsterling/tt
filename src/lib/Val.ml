@@ -10,7 +10,7 @@ type d =
   | Pi of d * d
   | Sg of d * d
   | Eq of d * d * d
-  | EDim
+  | Interval
   | U
   | Pair of d * d
   | Ax

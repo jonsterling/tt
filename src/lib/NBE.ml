@@ -68,7 +68,7 @@ and apply d1 d2 =
       D.Up (cod', app)
     | D.Eq (cod, _, _) ->
       let cod' = apply cod d2 in
-      let app = D.App (dne, D.Down (D.EDim, d2)) in
+      let app = D.App (dne, D.Down (D.Interval, d2)) in
       D.Up (cod', app)
     | _ -> failwith "apply/up: unexpected type"
     end
@@ -135,7 +135,7 @@ let rec quo_nf n dnf =
     let t2 = quo_nf n (D.Down (apply cod d1, d2)) in
     Tm.Pair (t1, t2)
   | D.Eq (cod, d1, d2), _ ->
-    let atom = D.Up (D.EDim, D.Atom n) in
+    let atom = D.Up (D.Interval, D.Atom n) in
     let app = D.Down (apply cod atom, apply d atom) in
     let body = quo_nf (n + 1) app in
     Tm.Lam (Tm.Bind.Mk body)
@@ -152,7 +152,7 @@ let rec quo_nf n dnf =
     let tcod = quo_nf (n + 1) (D.Down (univ, apply cod atom)) in
     Tm.Sg (tdom, Tm.Bind.Mk tcod)
   | univ, D.Eq (cod, d1, d2) ->
-    let atom = D.Up (D.EDim, D.Atom n) in
+    let atom = D.Up (D.Interval, D.Atom n) in
     let tcod = quo_nf (n + 1) (D.Down (univ, apply cod atom)) in
     let t1 = quo_nf n (D.Down (apply cod D.Dim0, d1)) in
     let t2 = quo_nf n (D.Down (apply cod D.Dim1, d2)) in
