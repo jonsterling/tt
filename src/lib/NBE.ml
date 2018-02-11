@@ -19,6 +19,14 @@ let rec eval rho t =
   | Tm.ChkSub (t, s) ->
     let rho' = eval_sub rho s in
     eval rho' t
+  | Tm.Hole (ty, bnd) ->
+    let dty = eval rho ty in
+    D.Hole (dty, D.Clo (bnd, rho))
+  | Tm.Guess (ty, guess, bnd) ->
+    let dty = eval rho ty in
+    let dguess = eval rho guess in
+    D.Guess (dty, dguess, D.Clo (bnd, rho))
+
 
 and eval_inf rho t =
   match t with
@@ -123,40 +131,61 @@ let eval_ctx cx =
 let rec quo_nf n dnf =
   let D.Down (dty, d) = dnf in
   match dty, d with
+  | _, D.Hole (dhty, clo) ->
+    let hty = quo_nf n (D.Down (D.U, dhty)) in
+    let atom = D.Up (dhty, D.Atom n) in
+    let tm = quo_nf (n + 1) (D.Down (dhty, apply clo atom)) in
+    Tm.Hole (hty, Tm.Bind.Mk tm)
+
+  | _, D.Guess (dhty, dguess, clo) ->
+    let hty = quo_nf n (D.Down (D.U, dhty)) in
+    let guess = quo_nf n (D.Down (dhty, dguess)) in
+    let atom = D.Up (dhty, D.Atom n) in
+    let tm = quo_nf (n + 1) (D.Down (dhty, apply clo atom)) in
+    Tm.Guess (hty, guess, Tm.Bind.Mk tm)
+
   | D.Pi (dom, cod), _ ->
     let atom = D.Up (dom, D.Atom n) in
     let app = D.Down (apply cod atom, apply d atom) in
     let body = quo_nf (n + 1) app in
     Tm.Lam (Tm.Bind.Mk body)
+
   | D.Sg (dom, cod), _ ->
     let d1 = proj1 d in
     let d2 = proj2 d in
     let t1 = quo_nf n (D.Down (dom, d1)) in
     let t2 = quo_nf n (D.Down (apply cod d1, d2)) in
     Tm.Pair (t1, t2)
+
   | D.Eq (cod, d1, d2), _ ->
     let atom = D.Up (D.Interval, D.Atom n) in
     let app = D.Down (apply cod atom, apply d atom) in
     let body = quo_nf (n + 1) app in
     Tm.Lam (Tm.Bind.Mk body)
+
   | D.Unit, _ -> Tm.Ax
+
   | _, D.U -> Tm.U
+
   | univ, D.Pi (dom, cod) ->
     let tdom = quo_nf n (D.Down (univ, dom)) in
     let atom = D.Up (dom, D.Atom n) in
     let tcod = quo_nf (n + 1) (D.Down (univ, apply cod atom)) in
     Tm.Pi (tdom, Tm.Bind.Mk tcod)
+
   | univ, D.Sg (dom, cod) ->
     let tdom = quo_nf n (D.Down (univ, dom)) in
     let atom = D.Up (dom, D.Atom n) in
     let tcod = quo_nf (n + 1) (D.Down (univ, apply cod atom)) in
     Tm.Sg (tdom, Tm.Bind.Mk tcod)
+
   | univ, D.Eq (cod, d1, d2) ->
     let atom = D.Up (D.Interval, D.Atom n) in
     let tcod = quo_nf (n + 1) (D.Down (univ, apply cod atom)) in
     let t1 = quo_nf n (D.Down (apply cod D.Dim0, d1)) in
     let t2 = quo_nf n (D.Down (apply cod D.Dim1, d2)) in
     Tm.Eq (Tm.Bind.Mk tcod, t1, t2)
+
   | _, D.Tt -> Tm.Tt
   | _, D.Ff -> Tm.Ff
   | _, D.Dim0 -> Tm.Dim0

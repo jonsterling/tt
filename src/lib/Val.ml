@@ -18,6 +18,8 @@ type d =
   | Ff
   | Dim0
   | Dim1
+  | Hole of d * d
+  | Guess of d * d * d
 
 and dne =
   | Atom of int

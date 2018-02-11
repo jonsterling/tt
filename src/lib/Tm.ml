@@ -25,6 +25,8 @@ type chk =
   | Dim1
   | U
   | ChkSub of chk * sub
+  | Hole of chk * chk Bind.t
+  | Guess of chk * chk * chk Bind.t
   [@@deriving (eq, ord, show)]
 and inf =
   | Var
