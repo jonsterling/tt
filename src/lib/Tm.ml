@@ -34,7 +34,6 @@ and inf =
   | Proj1 of inf
   | Proj2 of inf
   | If of chk Bind.t * inf * chk * chk
-  (* | Coe of (chk * chk) * chk Bind.t * chk *)
   | Down of chk * chk
   | InfSub of inf * sub
   [@@deriving (eq, ord, show)]
