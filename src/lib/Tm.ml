@@ -48,7 +48,6 @@ type ctx =
   | CNil
   | CExt of ctx * chk
 
-
 let rec weak n =
   match n with
   | 0 -> Wk
