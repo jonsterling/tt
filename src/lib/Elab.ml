@@ -15,60 +15,61 @@ struct
     | Pair2
 end
 
-type state = Cut of Tm.ctx * Tm.chk * (Tm.chk -> state) option
+type frame = {ctx : Tm.ctx; ty : Tm.chk; tm : Tm.chk}
+type state = Cut of frame * (Tm.chk -> state) option
 type tactic = state -> state
 
-let (<:) (ctx, tm) k = Cut (ctx, tm, Some k)
-let (<:?) (ctx, tm) k = Cut (ctx, tm, k)
+let (<:) f k = Cut (f, Some k)
+let (<:?) f k = Cut (f, k)
 
 let up (st : state) : state =
   match st with
-  | Cut (ctx, tm, Some k) -> k tm
+  | Cut ({tm}, Some k) -> k tm
   | _ -> failwith "up"
 
 let down (addr : Addr.t) (st : state) : state =
   match addr, st with
-  | Pair1, Cut (ctx, Tm.Pair (t1, t2), kont) ->
-    (ctx, t1) <: fun x1 ->
-      (ctx, Tm.Pair (x1, t2)) <:? kont
-
-  | Pair2, Cut (ctx, Tm.Pair (t1, t2), kont) ->
-    (ctx, t2) <: fun x2 ->
-      (ctx, Tm.Pair (t1, x2)) <:? kont
+  | Pair1, Cut ({ctx; tm = Tm.Pair (t1, t2); ty = (Tm.Sg (dom, Tm.Bind.Mk cod)) as ty}, kont) ->
+    {ctx = ctx; tm = t1; ty = dom} <: fun x1 ->
+      {ctx = ctx; tm = Tm.Pair (x1, t2); ty = ty} <:? kont
+  | Pair2, Cut ({ctx; tm = Tm.Pair (t1, t2); ty = (Tm.Sg (dom, Tm.Bind.Mk cod)) as ty}, kont) ->
+    let cod' = NBE.nbe ctx ~ty:U ~tm:(Tm.ChkSub (cod, Tm.Ext (Tm.Id, t1))) in
+    {ctx = ctx; tm = t2; ty = cod'} <: fun x2 ->
+      {ctx = ctx; tm = Tm.Pair (t1, x2); ty = ty} <:? kont
 
   | _ -> failwith "down"
 
-let lift (f : Tm.ctx -> Tm.chk -> Tm.chk) : tactic =
-  function Cut (ctx, t, kont) ->
-    (ctx, f ctx t) <:? kont
+let lift (f : frame -> frame) : tactic =
+  function Cut (frm, kont) ->
+    f frm <:? kont
 
 let attack : tactic =
-  lift @@ fun ctx t ->
-    match t with
-    | Tm.Hole (ty, bdy) -> guess ~ty:ty ~tm:(id_hole ty) ~bdy:bdy
+  lift @@ fun {ctx; tm; ty} ->
+    match tm with
+    | Tm.Hole (ty, bdy) -> {ctx = ctx; tm = guess ~ty:ty ~tm:(id_hole ty) ~bdy:bdy; ty = ty}
     | _ -> failwith "attack"
 
 let lambda : tactic =
-  function Cut (ctx, t, kont) ->
-    match t with
+  lift @@ fun {ctx; tm; ty} ->
+    match tm with
     | Tm.Hole (ty, Tm.Bind.Mk (Tm.Up Tm.Var)) ->
       begin match NBE.nbe ctx ~tm:ty ~ty:Tm.U with
-      | Tm.Pi (dom, Tm.Bind.Mk cod) ->
-        (Tm.CExt (ctx, dom), id_hole ~ty:cod) <: fun z ->
-          (ctx, Tm.Lam (Tm.Bind.Mk z)) <:? kont
+      | (Tm.Pi (dom, Tm.Bind.Mk cod)) as nty ->
+        let hbdy = id_hole ~ty:cod in
+        {ctx = ctx; ty = nty; tm = Tm.Lam (Tm.Bind.Mk hbdy)}
       | _ -> failwith "lambda"
       end
     | _ -> failwith "lambda"
 
 let pi : tactic =
-  function Cut (ctx, t, kont) ->
-    match t with
+  lift @@ fun {ctx; tm} ->
+    match tm with
     | Tm.Hole (ty, Tm.Bind.Mk (Tm.Up Tm.Var)) ->
       begin match NBE.nbe ctx ~tm:ty ~ty:Tm.U with
       | Tm.U ->
-        (ctx, id_hole ~ty:U) <: fun dom ->
-          (Tm.CExt (ctx, dom), id_hole ~ty:U) <: fun cod ->
-             (ctx, Tm.Pi (dom, Tm.Bind.Mk cod)) <:? kont
+        let hdom = id_hole ~ty:U in
+        let hcod = id_hole ~ty:U in
+        {ctx = ctx; ty = Tm.U; tm = Tm.Pi (hdom, Tm.Bind.Mk hcod)}
       | _ -> failwith "pi"
       end
     | _ -> failwith "pi"
