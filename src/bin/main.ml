@@ -13,12 +13,6 @@
 
 open Cmdliner
 
-module Example = struct
-  open TT.NBE
-  open TT.Tm
-  open TT.Val
-end
-
 let cmd_help: unit Lwt.t Term.t * Term.info =
   let doc = "show help" in
   Term.
