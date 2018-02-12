@@ -4,9 +4,9 @@ sig
   type t =
     | Pair1
     | Pair2
-    (* | LamBody
-       | PiDom
-       | PiCod *)
+    | LamBody
+    | PiDom
+    | PiCod
 end
 
 type state

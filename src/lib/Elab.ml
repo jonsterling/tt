@@ -13,6 +13,9 @@ struct
   type t =
     | Pair1
     | Pair2
+    | LamBody
+    | PiDom
+    | PiCod
 end
 
 type frame = {ctx : Tm.ctx; ty : Tm.chk; tm : Tm.chk}
@@ -32,10 +35,23 @@ let down (addr : Addr.t) (st : state) : state =
   | Pair1, Cut ({ctx; tm = Tm.Pair (t1, t2); ty = (Tm.Sg (dom, Tm.Bind.Mk cod)) as ty}, kont) ->
     {ctx = ctx; tm = t1; ty = dom} <: fun x1 ->
       {ctx = ctx; tm = Tm.Pair (x1, t2); ty = ty} <:? kont
+
   | Pair2, Cut ({ctx; tm = Tm.Pair (t1, t2); ty = (Tm.Sg (dom, Tm.Bind.Mk cod)) as ty}, kont) ->
     let cod' = NBE.nbe ctx ~ty:U ~tm:(Tm.ChkSub (cod, Tm.Ext (Tm.Id, t1))) in
     {ctx = ctx; tm = t2; ty = cod'} <: fun x2 ->
       {ctx = ctx; tm = Tm.Pair (t1, x2); ty = ty} <:? kont
+
+  | LamBody, Cut ({ctx; tm = Tm.Lam (Tm.Bind.Mk bdy); ty = (Tm.Pi (dom, Tm.Bind.Mk cod)) as ty}, kont) ->
+    {ctx = Tm.CExt (ctx, dom); tm = bdy; ty = cod}  <: fun b ->
+      {ctx = ctx; tm = Tm.Lam (Tm.Bind.Mk b); ty = ty} <:? kont
+
+  | PiDom, Cut ({ctx; tm = Tm.Pi (dom, cod); ty = Tm.U}, kont) ->
+    {ctx = ctx; tm = dom; ty = Tm.U} <: fun a ->
+      {ctx = ctx; tm = Tm.Pi (a, cod); ty = Tm.U} <:? kont
+
+  | PiCod, Cut ({ctx; tm = Tm.Pi (dom, Tm.Bind.Mk cod); ty = Tm.U}, kont) ->
+    {ctx = Tm.CExt (ctx, dom); tm = cod; ty = Tm.U} <: fun b ->
+      {ctx = ctx; tm = Tm.Pi (dom, Tm.Bind.Mk b); ty = Tm.U} <:? kont
 
   | _ -> failwith "down"
 
