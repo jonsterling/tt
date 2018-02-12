@@ -9,6 +9,12 @@ end
    - join: equate boundary-compatible equations
 *)
 
+type 'a dev =
+  | Guess of 'a * 'a * 'a Bind.t
+  | Hole of 'a * 'a Bind.t
+  | Ret of 'a
+  [@@deriving (eq, ord, show)]
+
 type chk =
   | Up of inf
   | Unit
@@ -25,8 +31,7 @@ type chk =
   | Dim1
   | U
   | ChkSub of chk * sub
-  | Hole of chk * chk Bind.t
-  | Guess of chk * chk * chk Bind.t
+  | Dev of chk dev ref
   [@@deriving (eq, ord, show)]
 
 and inf =

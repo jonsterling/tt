@@ -1,149 +1,83 @@
-let hole ~ty ~bdy =
-  Tm.Hole (ty, bdy)
+type hole = Tm.chk Tm.dev ref
+type frame = {ctx : Tm.ctx; dev : Tm.chk Tm.dev ref}
 
-let guess ~ty ~tm ~bdy =
-  Tm.Guess (ty, tm, bdy)
+type stack = frame list
+type state = {ctx : Tm.ctx; ty : Tm.chk; tm : Tm.chk; stk : stack}
 
-let id_hole ~ty =
-  Tm.Hole (ty, Tm.Bind.Mk (Tm.Up Tm.Var))
+let alloc ~ty =
+  ref @@ Tm.Hole (ty, Tm.Bind.Mk (Tm.Up Tm.Var))
 
-module Addr =
-struct
-  type t =
-    | Pair1
-    | Pair2
-    | LamBody
-    | PiDom
-    | PiCod
-end
+let init ~ty =
+  let hole = alloc ty in
+  let frame = {ctx = Tm.CNil; dev = hole} in
+  {ty = ty; ctx = Tm.CNil; tm = Tm.Dev hole; stk = [frame]}
 
-type frame = {ctx : Tm.ctx; ty : Tm.chk; tm : Tm.chk}
-type state = Cut of frame * (Tm.chk -> state) option
-type tactic = state -> state
+let pop stk =
+  match stk with
+  | {ctx; dev} :: stk -> (ctx, dev, stk)
+  | _ -> failwith "pop"
 
-let (<:) f k = Cut (f, Some k)
-let (<:?) f k = Cut (f, k)
+let lambda {tm; stk; ctx; ty} =
+  let hctx, dev, stk = pop stk in
+  match !dev with
+  | Tm.Hole (hty, Tm.Bind.Mk (Tm.Up Tm.Var)) ->
+    begin match NBE.nbe hctx ~ty:Tm.U ~tm:hty with
+    | Tm.Pi (dom, Tm.Bind.Mk cod) ->
+      let dev' = alloc cod in
+      let frm' = {ctx = Tm.CExt (hctx, dom); dev = dev'} in
+      dev := Tm.Ret (Tm.Lam (Tm.Bind.Mk (Tm.Dev dev')));
+      {tm; stk = frm' :: stk; ctx; ty}
+    | _ -> failwith ""
+    end
+  | _ -> failwith "lambda"
 
-let up (st : state) : state =
-  match st with
-  | Cut ({tm; _}, Some k) -> k tm
-  | _ -> failwith "up"
+let fill t {tm; stk; ctx; ty} =
+  let _, dev, _ = pop stk in
+  match !dev with
+  | Tm.Hole (hty, bdy) ->
+    dev := Tm.Guess (hty, t, bdy);
+    {tm; stk; ctx; ty}
+  | _ -> failwith "fill"
 
-let rec unload (st : state) : Tm.chk =
-  match st with
-  | Cut ({tm; _}, Some k) -> unload @@ k tm
-  | Cut ({tm; _}, None) -> tm
+let solve {tm; stk; ctx; ty} =
+  let _, dev, stk' = pop stk in
+  match !dev with
+  | Tm.Guess (_hty, htm, Tm.Bind.Mk bdy) ->
+    (* TODO: purify htm *)
+    dev := Tm.Ret (Tm.ChkSub (bdy, Tm.Ext (Tm.Id, htm)));
+    {tm; stk = stk'; ctx; ty}
+  | _ -> failwith "solve"
 
-let down (addr : Addr.t) (st : state) : state =
-  let Cut ({ctx; tm; ty}, kont) = st in
-  match addr, NBE.nbe ctx ~ty ~tm, NBE.nbe ctx ~ty:Tm.U ~tm:ty with
-  | Addr.Pair1, Tm.Pair (t1, t2), (Tm.Sg (dom, Tm.Bind.Mk _cod) as ty) ->
-    {ctx; tm = t1; ty = dom} <: fun x1 ->
-      {ctx; tm = Tm.Pair (x1, t2); ty} <:? kont
+let attack {ctx; ty; tm; stk} =
+  let hctx, dev, _ = pop stk in
+  match !dev with
+  | Tm.Hole (hty, bdy) ->
+    let dev' = alloc hty in
+    let guess = Tm.Dev dev' in
+    dev := Tm.Guess (hty, guess, bdy);
+    let frm = {ctx = hctx; dev = dev'} in
+    {ctx; ty; tm; stk = frm :: stk}
+  | _ -> failwith "attack"
 
-  | Addr.Pair2, Tm.Pair (t1, t2), (Tm.Sg (_dom, Tm.Bind.Mk cod) as ty) ->
-    let cod' = NBE.nbe ctx ~ty:Tm.U ~tm:(Tm.ChkSub (cod, Tm.Ext (Tm.Id, t1))) in
-    {ctx; tm = t2; ty = cod'} <: fun x2 ->
-      {ctx; tm = Tm.Pair (t1, x2); ty} <:? kont
+let rec lookup_frame r stk =
+  let ctx, r', stk' = pop stk in
+  if r = r' then {ctx = ctx; dev = r} else lookup_frame r stk'
 
-  | Addr.LamBody, Tm.Lam (Tm.Bind.Mk bdy), (Tm.Pi (dom, Tm.Bind.Mk cod) as ty) ->
-    {ctx = Tm.CExt (ctx, dom); tm = bdy; ty = cod}  <: fun b ->
-      {ctx; tm = Tm.Lam (Tm.Bind.Mk b); ty} <:? kont
+let norm {tm; ctx; ty; stk} =
+  {tm = NBE.nbe ctx ~ty ~tm; ty; ctx; stk}
 
-  | Addr.PiDom, Tm.Pi (dom, cod), Tm.U ->
-    {ctx; tm = dom; ty = Tm.U} <: fun a ->
-      {ctx; tm = Tm.Pi (a, cod); ty = Tm.U} <:? kont
+let (|>) t1 t2 st = t2 (t1 st)
 
-  | Addr.PiCod, Tm.Pi (dom, Tm.Bind.Mk cod), Tm.U ->
-    {ctx = Tm.CExt (ctx, dom); tm = cod; ty = Tm.U} <: fun b ->
-      {ctx; tm = Tm.Pi (dom, Tm.Bind.Mk b); ty = Tm.U} <:? kont
 
-  | _, tm, _ -> failwith @@ "down" ^ Tm.show_chk tm
+let test_ty = Tm.Pi (Tm.Unit, Tm.Bind.Mk Tm.Unit)
 
-let lift (f : frame -> frame) : tactic =
-  function Cut (frm, kont) ->
-    f frm <:? kont
 
-let attack : tactic =
-  function Cut ({ctx; tm; ty}, kont) ->
-    match tm with
-    | Tm.Hole (hty, hbdy) ->
-      {ctx; tm = id_hole hty; ty = hty} <: fun h ->
-        {ctx; tm = guess ~ty:hty ~tm:h ~bdy:hbdy; ty} <:? kont
-    | _ -> failwith "attack"
-
-let normalize : tactic =
-  lift @@ fun {ctx; tm; ty} ->
-    {ctx; tm = NBE.nbe ctx ~tm ~ty; ty = NBE.nbe ctx ~tm:ty ~ty:Tm.U}
-
-let try_ t : tactic =
-  lift @@ fun {ctx; tm; ty} ->
-    match tm with
-    | Tm.Hole (_hty, bdy) ->
-      (* TODO: check t against hty, once we have the core typechecker *)
-      {ctx; tm = guess ~ty ~tm:t ~bdy; ty}
-    | _ -> failwith "try_"
-
-let solve : tactic =
-  lift @@ fun {ctx; tm; ty} ->
-    match tm with
-    | Tm.Guess (_, htm, Tm.Bind.Mk hbdy) ->
-      {ctx; tm = Tm.ChkSub (hbdy, Tm.Ext (Tm.Id, htm)); ty}
-    | _ -> failwith "solve"
-
-let lambda : tactic =
-  lift @@ fun {ctx; tm; _} ->
-    match tm with
-    | Tm.Hole (ty, Tm.Bind.Mk (Tm.Up Tm.Var)) ->
-      begin match NBE.nbe ctx ~tm:ty ~ty:Tm.U with
-      | (Tm.Pi (_dom, Tm.Bind.Mk cod)) as nty ->
-        let hbdy = id_hole ~ty:cod in
-        {ctx; ty = nty; tm = Tm.Lam (Tm.Bind.Mk hbdy)}
-      | nty -> failwith @@ "lambda: " ^ Tm.show_chk nty
-      end
-    | _ -> failwith @@ "lambda: " ^ Tm.show_chk tm
-
-let pi : tactic =
-  lift @@ fun {ctx; tm; _} ->
-    match tm with
-    | Tm.Hole (ty, Tm.Bind.Mk (Tm.Up Tm.Var)) ->
-      begin match NBE.nbe ctx ~tm:ty ~ty:Tm.U with
-      | Tm.U ->
-        let hdom = id_hole ~ty:Tm.U in
-        let hcod = id_hole ~ty:Tm.U in
-        {ctx; ty = Tm.U; tm = Tm.Pi (hdom, Tm.Bind.Mk hcod)}
-      | _ -> failwith "pi"
-      end
-    | _ -> failwith "pi"
-
-let (|>) (tac1 : tactic) (tac2 : tactic) st =
-  tac2 (tac1 st)
-
-let init ty =
-  {ctx = Tm.CNil; tm = id_hole ty; ty}
-    <:? None
-
-let attack_with tac =
+let test_tac =
   attack
-    |> tac
-    |> up
-    |> solve
+  |> lambda
+  |> (fill (Tm.Up Tm.Var) |> solve)
+  |> solve
+  |> norm
 
-let down_with addr tac =
-  down addr
-  |> tac
-  |> up
+let test_state = test_tac @@ init test_ty
 
-let lam bdy =
-  attack_with @@
-    lambda |> down_with Addr.LamBody @@
-      bdy (Tm.Up Tm.Var)
-
-let test_script =
-  lam @@ fun x ->
-    try_ x
-    |> solve
-
-
-let test_result =
-  unload @@ (test_script |> normalize) @@ init @@ Tm.Pi (Tm.Unit, Tm.Bind.Mk Tm.Unit)

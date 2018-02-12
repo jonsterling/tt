@@ -19,13 +19,11 @@ let rec eval rho t =
   | Tm.ChkSub (t, s) ->
     let rho' = eval_sub rho s in
     eval rho' t
-  | Tm.Hole (ty, bnd) ->
-    let dty = eval rho ty in
-    D.Hole (dty, D.Clo (bnd, rho))
-  | Tm.Guess (ty, guess, bnd) ->
-    let dty = eval rho ty in
-    let dguess = eval rho guess in
-    D.Guess (dty, dguess, D.Clo (bnd, rho))
+  | Tm.Dev r ->
+    begin match !r with
+    | Tm.Ret t -> eval rho t
+    | _ -> failwith "Cannot evaluate incomplete term"
+    end
 
 and eval_inf rho t =
   match t with
@@ -130,7 +128,7 @@ let eval_ctx cx =
 let rec quo_nf n dnf =
   let D.Down (dty, d) = dnf in
   match dty, d with
-  | _, D.Hole (dhty, clo) ->
+  (* | _, D.Hole (dhty, clo) ->
     let hty = quo_nf n (D.Down (D.U, dhty)) in
     let atom = D.Up (dhty, D.Atom n) in
     let tm = quo_nf (n + 1) (D.Down (dhty, apply clo atom)) in
@@ -141,7 +139,7 @@ let rec quo_nf n dnf =
     let guess = quo_nf n (D.Down (dhty, dguess)) in
     let atom = D.Up (dhty, D.Atom n) in
     let tm = quo_nf (n + 1) (D.Down (dhty, apply clo atom)) in
-    Tm.Guess (hty, guess, Tm.Bind.Mk tm)
+    Tm.Guess (hty, guess, Tm.Bind.Mk tm) *)
 
   | D.Pi (dom, cod), _ ->
     let atom = D.Up (dom, D.Atom n) in

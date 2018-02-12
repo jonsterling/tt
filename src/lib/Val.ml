@@ -18,8 +18,8 @@ type d =
   | Ff
   | Dim0
   | Dim1
-  | Hole of d * d
-  | Guess of d * d * d
+  (* | Hole of d * d
+  | Guess of d * d * d *)
   [@@deriving (eq, ord, show)]
 
 and dne =
