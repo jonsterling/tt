@@ -10,7 +10,7 @@ struct
     Pi (Unit, Bind.Mk Unit)
 
   let nf =
-    NBE.nbe CNil ~tm:tm ~ty:ty
+    NBE.nbe CNil ~tm ~ty
 
   let expected =
     Lam (Bind.Mk Ax)
