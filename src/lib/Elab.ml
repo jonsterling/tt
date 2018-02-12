@@ -35,29 +35,30 @@ let rec unload (st : state) : Tm.chk =
   | Cut ({tm; _}, None) -> tm
 
 let down (addr : Addr.t) (st : state) : state =
-  match addr, st with
-  | Addr.Pair1, Cut ({ctx; tm = Tm.Pair (t1, t2); ty = (Tm.Sg (dom, Tm.Bind.Mk _cod)) as ty}, kont) ->
+  let Cut ({ctx; tm; ty}, kont) = st in
+  match addr, NBE.nbe ctx ~ty ~tm, NBE.nbe ctx ~ty:Tm.U ~tm:ty with
+  | Addr.Pair1, Tm.Pair (t1, t2), (Tm.Sg (dom, Tm.Bind.Mk _cod) as ty) ->
     {ctx; tm = t1; ty = dom} <: fun x1 ->
       {ctx; tm = Tm.Pair (x1, t2); ty} <:? kont
 
-  | Addr.Pair2, Cut ({ctx; tm = Tm.Pair (t1, t2); ty = (Tm.Sg (_dom, Tm.Bind.Mk cod)) as ty}, kont) ->
+  | Addr.Pair2, Tm.Pair (t1, t2), (Tm.Sg (_dom, Tm.Bind.Mk cod) as ty) ->
     let cod' = NBE.nbe ctx ~ty:Tm.U ~tm:(Tm.ChkSub (cod, Tm.Ext (Tm.Id, t1))) in
     {ctx; tm = t2; ty = cod'} <: fun x2 ->
       {ctx; tm = Tm.Pair (t1, x2); ty} <:? kont
 
-  | Addr.LamBody, Cut ({ctx; tm = Tm.Lam (Tm.Bind.Mk bdy); ty = (Tm.Pi (dom, Tm.Bind.Mk cod)) as ty}, kont) ->
+  | Addr.LamBody, Tm.Lam (Tm.Bind.Mk bdy), (Tm.Pi (dom, Tm.Bind.Mk cod) as ty) ->
     {ctx = Tm.CExt (ctx, dom); tm = bdy; ty = cod}  <: fun b ->
       {ctx; tm = Tm.Lam (Tm.Bind.Mk b); ty} <:? kont
 
-  | Addr.PiDom, Cut ({ctx; tm = Tm.Pi (dom, cod); ty = Tm.U}, kont) ->
+  | Addr.PiDom, Tm.Pi (dom, cod), Tm.U ->
     {ctx; tm = dom; ty = Tm.U} <: fun a ->
       {ctx; tm = Tm.Pi (a, cod); ty = Tm.U} <:? kont
 
-  | Addr.PiCod, Cut ({ctx; tm = Tm.Pi (dom, Tm.Bind.Mk cod); ty = Tm.U}, kont) ->
+  | Addr.PiCod, Tm.Pi (dom, Tm.Bind.Mk cod), Tm.U ->
     {ctx = Tm.CExt (ctx, dom); tm = cod; ty = Tm.U} <: fun b ->
       {ctx; tm = Tm.Pi (dom, Tm.Bind.Mk b); ty = Tm.U} <:? kont
 
-  | _ -> failwith "down"
+  | _, tm, _ -> failwith @@ "down" ^ Tm.show_chk tm
 
 let lift (f : frame -> frame) : tactic =
   function Cut (frm, kont) ->
@@ -122,16 +123,27 @@ let init ty =
   {ctx = Tm.CNil; tm = id_hole ty; ty}
     <:? None
 
-let test_script =
+let attack_with tac =
   attack
-  |> lambda
-  |> down Addr.LamBody
-  |> try_ (Tm.Up Tm.Var)
-  |> solve
+    |> tac
+    |> up
+    |> solve
+
+let down_with addr tac =
+  down addr
+  |> tac
   |> up
-  |> up
-  |> solve
-  |> normalize
+
+let lam bdy =
+  attack_with @@
+    lambda |> down_with Addr.LamBody @@
+      bdy (Tm.Up Tm.Var)
+
+let test_script =
+  lam @@ fun x ->
+    try_ x
+    |> solve
+
 
 let test_result =
-  unload @@ test_script @@ init @@ Tm.Pi (Tm.Unit, Tm.Bind.Mk Tm.Unit)
+  unload @@ (test_script |> normalize) @@ init @@ Tm.Pi (Tm.Unit, Tm.Bind.Mk Tm.Unit)
