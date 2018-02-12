@@ -34,3 +34,9 @@ Requires `utop` (see prerequisites).
 ```
 $ make top
 ```
+
+### Tests
+
+```
+$ make test
+```

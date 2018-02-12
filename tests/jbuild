@@ -1,0 +1,15 @@
+(jbuild_version 1)
+
+(executables
+ ((names (test))
+  (flags (:standard -w +a-4-6-30-32-39-41-42-48-60 -warn-error +a))
+  (libraries (tt))))
+
+(install
+ ((section bin)
+  (files ((test.exe as test)))))
+
+(alias
+ ((name runtest)
+  (deps (test.exe))
+  (action (run ${<}))))

@@ -1,3 +1,4 @@
+open TT
 
 module Ex1 =
 struct
@@ -16,5 +17,5 @@ struct
     Lam (Bind.Mk Ax)
 
   let test =
-    if Tm.equal_chk nf expected then () else failwith "test failed"
+    if not @@ Tm.equal_chk nf expected then failwith "test failed"
 end
