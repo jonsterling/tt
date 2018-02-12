@@ -84,20 +84,20 @@ and apply d1 d2 =
 
 and proj1 d =
   match d with
-  | D.Pair (d1, d2) -> d1
+  | D.Pair (d1, _d2) -> d1
   | D.Up (ty, dne) ->
     begin match ty with
-    | D.Sg (dom, cod) -> D.Up (dom, D.Proj1 dne)
+    | D.Sg (dom, _cod) -> D.Up (dom, D.Proj1 dne)
     | _ -> failwith "proj1/up: unexpected type"
     end
   | _ -> failwith "proj1: not projectible"
 
 and proj2 d =
   match d with
-  | D.Pair (d1, d2) -> d2
+  | D.Pair (_d1, d2) -> d2
   | D.Up (ty, dne) ->
     begin match ty with
-    | D.Sg (dom, cod) ->
+    | D.Sg (_dom, cod) ->
       let cod' = apply cod (proj1 d) in
       D.Up (cod', D.Proj2 dne)
     | _ -> failwith "proj2/up: unexpected type"
@@ -157,7 +157,7 @@ let rec quo_nf n dnf =
     let t2 = quo_nf n (D.Down (apply cod d1, d2)) in
     Tm.Pair (t1, t2)
 
-  | D.Eq (cod, d1, d2), _ ->
+  | D.Eq (cod, _d1, _d2), _ ->
     let atom = D.Up (D.Interval, D.Atom n) in
     let app = D.Down (apply cod atom, apply d atom) in
     let body = quo_nf (n + 1) app in
@@ -190,7 +190,7 @@ let rec quo_nf n dnf =
   | _, D.Ff -> Tm.Ff
   | _, D.Dim0 -> Tm.Dim0
   | _, D.Dim1 -> Tm.Dim1
-  | _, D.Up (ty, dne) -> Tm.Up (quo_neu n dne)
+  | _, D.Up (_ty, dne) -> Tm.Up (quo_neu n dne)
   | _, _ -> failwith "quo_nf"
 
 and quo_neu n dne =
