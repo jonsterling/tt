@@ -186,12 +186,14 @@ let rec quo_nf n dnf =
     let t2 = quo_nf n (D.Down (apply cod D.Dim1, d2)) in
     Tm.Eq (Tm.Bind.Mk tcod, t1, t2)
 
+  | _, D.Unit -> Tm.Unit
+  | _, D.Bool -> Tm.Bool
   | _, D.Tt -> Tm.Tt
   | _, D.Ff -> Tm.Ff
   | _, D.Dim0 -> Tm.Dim0
   | _, D.Dim1 -> Tm.Dim1
   | _, D.Up (_ty, dne) -> Tm.Up (quo_neu n dne)
-  | _, _ -> failwith "quo_nf"
+  | _, d -> failwith ("quo_nf" ^ D.show_d d)
 
 and quo_neu n dne =
   match dne with

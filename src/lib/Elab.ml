@@ -30,6 +30,12 @@ let up (st : state) : state =
   | Cut ({tm; _}, Some k) -> k tm
   | _ -> failwith "up"
 
+
+let rec unload (st : state) : Tm.chk =
+  match st with
+  | Cut ({tm; _}, Some k) -> unload @@ k tm
+  | Cut ({tm; _}, None) -> tm
+
 let down (addr : Addr.t) (st : state) : state =
   match addr, st with
   | Addr.Pair1, Cut ({ctx; tm = Tm.Pair (t1, t2); ty = (Tm.Sg (dom, Tm.Bind.Mk _cod)) as ty}, kont) ->
@@ -59,10 +65,32 @@ let lift (f : frame -> frame) : tactic =
     f frm <:? kont
 
 let attack : tactic =
-  lift @@ fun {ctx; tm; _} ->
+  function Cut ({ctx; tm; ty}, kont) ->
     match tm with
-    | Tm.Hole (ty, bdy) -> {ctx = ctx; tm = guess ~ty:ty ~tm:(id_hole ty) ~bdy:bdy; ty = ty}
+    | Tm.Hole (hty, hbdy) ->
+      {ctx = ctx; tm = id_hole hty; ty = hty} <: fun h ->
+        {ctx = ctx; tm = guess ~ty:hty ~tm:h ~bdy:hbdy; ty = ty} <:? kont
     | _ -> failwith "attack"
+
+let normalize : tactic =
+  lift @@ fun {ctx; tm; ty} ->
+    {ctx = ctx; tm = NBE.nbe ctx ~tm ~ty; ty = NBE.nbe ctx ~tm:ty ~ty:Tm.U}
+
+let try_ t : tactic =
+  lift @@ fun {ctx; tm; ty} ->
+    match tm with
+    | Tm.Hole (_hty, bdy) ->
+      (* TODO: check t against hty, once we have the core typechecker *)
+      {ctx = ctx; tm = guess ~ty:ty ~tm:t ~bdy:bdy; ty = ty}
+    | _ -> failwith "try_"
+
+let solve : tactic =
+  lift @@ fun {ctx; tm; ty} ->
+    match tm with
+    | Tm.Guess (_, htm, Tm.Bind.Mk hbdy) ->
+      {ctx = ctx; tm = Tm.ChkSub (hbdy, Tm.Ext (Tm.Id, htm)); ty = ty}
+    | _ -> failwith "solve"
+
 
 let lambda : tactic =
   lift @@ fun {ctx; tm; _} ->
@@ -72,9 +100,9 @@ let lambda : tactic =
       | (Tm.Pi (_dom, Tm.Bind.Mk cod)) as nty ->
         let hbdy = id_hole ~ty:cod in
         {ctx = ctx; ty = nty; tm = Tm.Lam (Tm.Bind.Mk hbdy)}
-      | _ -> failwith "lambda"
+      | nty -> failwith @@ "lambda: " ^ Tm.show_chk nty
       end
-    | _ -> failwith "lambda"
+    | _ -> failwith @@ "lambda: " ^ Tm.show_chk tm
 
 let pi : tactic =
   lift @@ fun {ctx; tm; _} ->
@@ -90,7 +118,23 @@ let pi : tactic =
     | _ -> failwith "pi"
 
 let (|>) (tac1 : tactic) (tac2 : tactic) st =
-  tac1 (tac2 st)
+  tac2 (tac1 st)
 
-let test =
-  attack |> lambda
+
+let init ty =
+  {ctx = Tm.CNil; tm = id_hole ty; ty = ty}
+    <:? None
+
+let test_script =
+  attack
+  |> lambda
+  |> down Addr.LamBody
+  |> try_ (Tm.Up Tm.Var)
+  |> solve
+  |> up
+  |> up
+  |> solve
+  |> normalize
+
+let test_result =
+  unload @@ test_script @@ init @@ Tm.Pi (Tm.Unit, Tm.Bind.Mk Tm.Unit)

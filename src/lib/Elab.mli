@@ -20,3 +20,5 @@ val down : Addr.t -> tactic
 val attack : tactic
 val lambda : tactic
 val pi : tactic
+
+val test_result : Tm.chk

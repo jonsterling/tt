@@ -20,6 +20,8 @@ type d =
   | Dim1
   | Hole of d * d
   | Guess of d * d * d
+  [@@deriving (eq, ord, show)]
+
 
 and dne =
   | Atom of int
@@ -27,8 +29,12 @@ and dne =
   | Proj1 of dne
   | Proj2 of dne
   | If of d * dne * dnf * dnf
+  [@@deriving (eq, ord, show)]
 
 and dnf =
   | Down of d * d
+  [@@deriving (eq, ord, show)]
 
 and env = d list
+  [@@deriving (eq, ord, show)]
+
