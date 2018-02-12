@@ -22,7 +22,6 @@ type d =
   | Guess of d * d * d
   [@@deriving (eq, ord, show)]
 
-
 and dne =
   | Atom of int
   | App of dne * dnf

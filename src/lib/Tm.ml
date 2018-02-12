@@ -28,6 +28,7 @@ type chk =
   | Hole of chk * chk Bind.t
   | Guess of chk * chk * chk Bind.t
   [@@deriving (eq, ord, show)]
+
 and inf =
   | Var
   | App of inf * chk
@@ -37,6 +38,7 @@ and inf =
   | Down of chk * chk
   | InfSub of inf * sub
   [@@deriving (eq, ord, show)]
+
 and sub =
   | Id
   | Wk

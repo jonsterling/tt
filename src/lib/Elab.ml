@@ -7,7 +7,6 @@ let guess ~ty ~tm ~bdy =
 let id_hole ~ty =
   Tm.Hole (ty, Tm.Bind.Mk (Tm.Up Tm.Var))
 
-
 module Addr =
 struct
   type t =
@@ -29,7 +28,6 @@ let up (st : state) : state =
   match st with
   | Cut ({tm; _}, Some k) -> k tm
   | _ -> failwith "up"
-
 
 let rec unload (st : state) : Tm.chk =
   match st with
@@ -91,7 +89,6 @@ let solve : tactic =
       {ctx = ctx; tm = Tm.ChkSub (hbdy, Tm.Ext (Tm.Id, htm)); ty = ty}
     | _ -> failwith "solve"
 
-
 let lambda : tactic =
   lift @@ fun {ctx; tm; _} ->
     match tm with
@@ -119,7 +116,6 @@ let pi : tactic =
 
 let (|>) (tac1 : tactic) (tac2 : tactic) st =
   tac2 (tac1 st)
-
 
 let init ty =
   {ctx = Tm.CNil; tm = id_hole ty; ty = ty}

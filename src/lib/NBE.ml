@@ -27,7 +27,6 @@ let rec eval rho t =
     let dguess = eval rho guess in
     D.Guess (dty, dguess, D.Clo (bnd, rho))
 
-
 and eval_inf rho t =
   match t with
   | Tm.Var -> List.hd rho
@@ -208,7 +207,6 @@ and quo_neu n dne =
     let t1 = quo_nf n d1 in
     let t2 = quo_nf n d2 in
     Tm.If (Tm.Bind.Mk tmot, tb, t1, t2)
-
 
 let nbe cx ~tm ~ty =
   let n, rho = eval_ctx_aux cx in
