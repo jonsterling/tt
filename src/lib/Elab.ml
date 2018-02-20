@@ -116,7 +116,7 @@ let pi : tactic =
       end
     | _ -> failwith "pi"
 
-let (|>) (tac1 : tactic) (tac2 : tactic) st =
+let (||>) (tac1 : tactic) (tac2 : tactic) st =
   tac2 (tac1 st)
 
 let init ty =
@@ -125,24 +125,24 @@ let init ty =
 
 let attack_with tac =
   attack
-    |> tac
-    |> up
-    |> solve
+    ||> tac
+    ||> up
+    ||> solve
 
 let down_with addr tac =
   down addr
-  |> tac
-  |> up
+  ||> tac
+  ||> up
 
 let lam bdy =
   attack_with @@
-    lambda |> down_with Addr.LamBody @@
+    lambda ||> down_with Addr.LamBody @@
       bdy (Tm.Up Tm.Var)
 
 let test_script =
   lam @@ fun x ->
     try_ x
-    |> solve
+    ||> solve
 
 let test_result =
-  unload @@ (test_script |> normalize) @@ init @@ Tm.Pi (Tm.Unit, Tm.Bind.Mk Tm.Unit)
+  unload @@ (test_script ||> normalize) @@ init @@ Tm.Pi (Tm.Unit, Tm.Bind.Mk Tm.Unit)
