@@ -2,7 +2,8 @@
 
 (library
  ((name TT)
-  (flags (:standard -w +a-4-6-30-32-39-41-42-48-60 -warn-error +a))
+  (flags (:standard -w +a-4-6-30-32-39-41-42-44-48-60 -warn-error +a))
+  (ocamlopt_flags (:standard -w +a-4-6-30-32-39-41-42-44-48-60 -warn-error +a -O3))
   (public_name tt)
   (libraries ())
   (preprocess (pps (ppx_deriving.std)))))
