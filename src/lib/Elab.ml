@@ -25,7 +25,22 @@ struct
   let into tf = In tf
 
   let intoS sbf = InSb sbf
-  let subst ~sb:_ ~tm:_ = failwith ""
+
+
+  (* TODO: implement *)
+  let subst ~sb ~tm : term =
+    match tm with 
+    | In tmf ->
+      begin match tmf with
+      | Var i -> failwith ""
+      | Lam t -> failwith ""
+      | App (_, _) -> failwith ""
+      | Ax -> tm
+      | Pi (_, _) -> failwith ""
+      | Unit -> tm
+      | _ -> failwith ""
+      end
+    | Ref (key, sb') -> Ref (key, intoS @@ Cmp (sb, sb'))
 end
 
 module Elab : Elab 
@@ -83,10 +98,11 @@ struct
     | Chk (ctx, Ask, ty) -> HT.replace env key @@ Chk (ctx, Ret tm, ty) 
     | _ -> failwith ""
 
-  let rec out t =
+  let rec out t : (int, term, subst) term_f t =
     match t with 
     | Types.In tf -> return tf
     | Types.Ref (key, sub) ->
-      let%bind t' = find key in
-      out @@ Tm.subst ~sb:sub ~tm:t'
+      match%bind find key with
+      | Chk (_, Ret t', _) -> out @@ Tm.subst ~sb:sub ~tm:t'
+      | Chk (_, Ask, _) -> failwith "[out]: Term is a hole"
 end
