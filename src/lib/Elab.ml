@@ -38,7 +38,7 @@ struct
       | Ax -> tm
       | Pi (_, _) -> failwith ""
       | Unit -> tm
-      | _ -> failwith ""
+      | Univ -> tm
       end
     | Ref (key, sb') -> Ref (key, intoS @@ Cmp (sb, sb'))
 end
