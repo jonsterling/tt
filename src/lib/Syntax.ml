@@ -43,7 +43,7 @@ sig
   type subst
 
   val alloc : term jdg -> hole M.m
-  val ask : term ctx -> term -> term M.m
+  val ask : term ctx -> term -> (hole * term) M.m
 
   val find : hole -> term jdg M.m
   val fill : hole -> term -> unit M.m
@@ -123,9 +123,10 @@ let pi alpha =
   | Chk (cx, Ask, ty) ->
     begin match%bind Tm.out ty with 
     | Univ ->
-      let%bind dom = Tm.ask cx ty in
-      let%bind cod = Tm.ask (CExt (cx, dom)) ty in
-      Tm.fill alpha @@ Tm.into @@ Pi (dom, cod)
+      let%bind (hdom, dom) = Tm.ask cx ty in
+      let%bind (hcod, cod) = Tm.ask (CExt (cx, dom)) ty in
+      let%bind _ = Tm.fill alpha @@ Tm.into @@ Pi (dom, cod) in
+      Tm.M.ret (hdom, hcod)
     | _ -> failwith ""
     end
   | _ -> failwith ""
@@ -135,8 +136,9 @@ let lambda alpha =
   | Chk (gm, Ask, ty) ->
     begin match%bind Tm.out ty with
     | Pi (dom, cod) ->
-      let%bind bdy = Tm.ask (CExt (gm, dom)) cod in
-      Tm.fill alpha @@ Tm.into @@ Lam bdy
+      let%bind (hbdy, bdy) = Tm.ask (CExt (gm, dom)) cod in
+      let%bind _ = Tm.fill alpha @@ Tm.into @@ Lam bdy in
+      Tm.M.ret hbdy
     | _ -> failwith ""
     end
   | _ -> failwith ""
