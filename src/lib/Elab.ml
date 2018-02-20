@@ -144,6 +144,5 @@ let test_script =
     try_ x
     |> solve
 
-
 let test_result =
   unload @@ (test_script |> normalize) @@ init @@ Tm.Pi (Tm.Unit, Tm.Bind.Mk Tm.Unit)

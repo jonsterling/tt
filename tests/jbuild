@@ -4,7 +4,8 @@
  ((names (test))
   (flags (:standard -w +a-4-6-30-32-39-41-42-44-48-60 -warn-error +a))
   (ocamlopt_flags (:standard -w +a-4-6-30-32-39-41-42-44-48-60 -warn-error +a -O3))
-  (libraries (tt))))
+  (libraries (tt))
+  (preprocess (pps (ppx_deriving.std ppx_jane ppx_driver.runner)))))
 
 (install
  ((section bin)
