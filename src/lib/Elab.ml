@@ -32,8 +32,8 @@ struct
     match tm with 
     | In tmf ->
       begin match tmf with
-      | Var i -> failwith ""
-      | Lam t -> failwith ""
+      | Var _ -> failwith ""
+      | Lam _ -> failwith ""
       | App (_, _) -> failwith ""
       | Ax -> tm
       | Pi (_, _) -> failwith ""
