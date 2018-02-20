@@ -29,7 +29,7 @@ let rec eval rho t =
 
 and eval_inf rho t =
   match t with
-  | Tm.Var -> List.hd rho
+  | Tm.Var -> List.hd_exn rho
   | Tm.App (t1, t2) ->
     let d1 = eval_inf rho t1 in
     let d2 = eval rho t2 in
@@ -53,7 +53,7 @@ and eval_inf rho t =
 and eval_sub rho s =
   match s with
   | Tm.Id -> rho
-  | Tm.Wk -> List.tl rho
+  | Tm.Wk -> List.tl_exn rho
   | Tm.Cmp (s1, s2) ->
     let rho' = eval_sub rho s2 in
     let rho'' = eval_sub rho' s1 in

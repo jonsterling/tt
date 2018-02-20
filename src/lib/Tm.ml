@@ -1,3 +1,5 @@
+[@@@warning "-3"] (* FIXME: deprecated: module Base.Format *)
+
 module Bind = struct
   type 'a t = Mk of 'a
   [@@deriving (eq, ord, show)]

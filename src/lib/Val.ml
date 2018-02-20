@@ -1,3 +1,5 @@
+[@@@warning "-3"] (* FIXME: deprecated: module Base.Format *)
+
 (* We treat the semantic domain as a partial applicative structure, interpreting binding forms directly as closures.
    The meaning of variables is "atoms" or indeterminate constants, which are structured a De Bruijn Levels (not indices).
  *)

@@ -32,9 +32,9 @@ let cmds = [
 
 let main () =
   match Term.eval_choice cmd_default cmds with
-  | `Error _e -> exit 1
+  | `Error _e -> Caml.exit 1
   | `Ok expr -> Lwt_main.run expr
-  | _ -> exit 0
+  | _ -> Caml.exit 0
 
 let () =
   if not !Sys.interactive then
