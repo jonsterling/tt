@@ -1,16 +1,3 @@
-(* This is an experiment in designing a formal type theory inspired by
-   both Observational Type Theory and American Cubical Type Theory.
-
-   From OTT we take the idea of extensional, proof-irrelevant heterogeneous
-   equality in a decidable setting, for an ergonomic proof theory;
-   from (American) Cubical Type Theory, we take the idea of using abstract
-   dimensions to realize this structure, and the specific coe and hcom
-   operations.
-
-   We will add a third operation, "join", which equates any two equations which
-   have compatible bounadary.
-*)
-
 open Cmdliner
 
 let cmd_help: unit Lwt.t Term.t * Term.info =
