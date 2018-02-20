@@ -6,4 +6,4 @@
   (ocamlopt_flags (:standard -w +a-4-6-30-32-39-41-42-44-48-60 -warn-error +a -open Base -O3))
   (public_name tt)
   (libraries ())
-  (preprocess (pps (ppx_deriving.std ppx_jane ppx_driver.runner)))))
+  (preprocess (pps (ppx_deriving.std ppx_jane ppx_let ppx_driver.runner)))))
