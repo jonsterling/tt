@@ -62,6 +62,7 @@ struct
 
   module Env = Caml.Map.Make (String)
 
+  (* TODO: here is where you would store things like hash keys and tags *)
   type term = 
     | In of (int, term, subst) term_f
     | Ref of string * subst
@@ -82,6 +83,11 @@ struct
     let bind = M.bind
   end
 
+  (* TODO: most of the following operations should be memoizable, but it may be a little tricky since 
+     the identity of an instance of one of these operations includes the identity of the current state. 
+     Ideas?
+  *)
+
   let subst _ _ = failwith "todo"
   let out _ = failwith "todo"
   let into _ = failwith "todo"
@@ -95,6 +101,7 @@ struct
     meta alpha idS
 
   let find _ = failwith "todo"
+
   let fill _ = failwith "todo"
 end
 
