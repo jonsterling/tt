@@ -48,9 +48,13 @@ sig
   val find : hole -> term jdg M.m
   val fill : hole -> term -> unit M.m
 
+  (* memoized *)
   val subst : subst -> term -> term
+
+  (* this is in the monad because we may need to follow pointers into the proof state *)
   val out : term -> (int, term, subst) term_f M.m
 
+  (* this should induce sharing *)
   val into : (int, term, subst) term_f -> term
   val intoS : (term, subst) subst_f -> subst
 
