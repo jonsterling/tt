@@ -4,6 +4,7 @@ module Types =
 struct
   type hole = string
 
+  (* Here is where things like hash keys and tags should be kept *)
   type term = 
     | In of (int, term, subst) term_f
     | Ref of hole * subst
@@ -73,7 +74,14 @@ struct
   let find key env =
     HT.find env key
 
-  let fill = failwith ""  
+  (* TODO: 
+     - [ ] possibly typecheck the term
+     - [ ] allow things other than Ask via unification
+   *)
+  let fill key tm env =
+    match HT.find env key with
+    | Chk (ctx, Ask, ty) -> HT.replace env key @@ Chk (ctx, Ret tm, ty) 
+    | _ -> failwith ""
 
   let rec out t =
     match t with 
