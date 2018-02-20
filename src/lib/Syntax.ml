@@ -29,8 +29,9 @@ module type Tm =
 sig
   type hole
 
-  (* This monad will handle things like the proof state, as well as other things like
-     enforcing sharing, memoization, etc. *)
+
+  (* New Line: this monad handles proof state, but things like sharing and hash consing should probably be 
+    separate and imperative. *)
   module M :
   sig
     type 'a m
@@ -47,12 +48,13 @@ sig
   val find : hole -> term jdg M.m
   val fill : hole -> term -> unit M.m
 
-  val subst : subst -> term -> term M.m
+  val subst : subst -> term -> term
   val out : term -> (int, term, subst) term_f M.m
-  val into : (int, term, subst) term_f -> term M.m
-  val intoS : (term, subst) subst_f -> subst M.m
 
-  val meta : hole -> subst -> term M.m
+  val into : (int, term, subst) term_f -> term
+  val intoS : (term, subst) subst_f -> subst
+
+  val meta : hole -> subst -> term 
 end
 
 
@@ -92,13 +94,15 @@ struct
   let out _ = failwith "todo"
   let into _ = failwith "todo"
   let intoS _ = failwith "todo"
-  let meta _ _ = failwith "todo"
+
+  let meta alpha sb =
+    Ref (alpha, sb)
+
   let alloc _ = failwith "todo"
 
   let ask cx ty = 
     let%bind alpha = alloc @@ Chk (cx, Ask, ty) in
-    let%bind idS = intoS Id in
-    meta alpha idS
+    meta alpha (intoS Id)
 
   let find _ = failwith "todo"
 
@@ -117,8 +121,7 @@ let pi alpha =
     | Univ ->
       let%bind dom = Tm.ask cx ty in
       let%bind cod = Tm.ask (CExt (cx, dom)) ty in
-      let%bind pi_ = Tm.into @@ Pi (dom, cod) in
-      Tm.fill alpha pi_
+      Tm.fill alpha @@ Tm.into @@ Pi (dom, cod)
     | _ -> failwith ""
     end
   | _ -> failwith ""
@@ -129,8 +132,7 @@ let lambda alpha =
     begin match%bind Tm.out ty with
     | Pi (dom, cod) ->
       let%bind bdy = Tm.ask (CExt (gm, dom)) cod in
-      let%bind lam = Tm.into @@ Lam bdy in
-      Tm.fill alpha lam
+      Tm.fill alpha @@ Tm.into @@ Lam bdy
     | _ -> failwith ""
     end
   | _ -> failwith ""
