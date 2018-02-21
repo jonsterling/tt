@@ -40,19 +40,16 @@ sig
   val meta : hole -> subst -> term
 end
 
-module type Elab =
+module type ElabCore =
 sig
   include Monad.Basic
   val alt : 'a t list -> 'a t
 
-  type hole
-  type term
-  type subst
+  module Tm : Tm
 
-  val alloc : term jdg -> hole t
-  val ask : ctx:term ctx -> ty:term -> (hole * term) t
-  val find : hole -> term jdg t
-  val fill : hole -> term -> unit t
+  val alloc : Tm.term jdg -> Tm.hole t
+  val find : Tm.hole -> Tm.term jdg t
+  val fill : Tm.hole -> Tm.term -> unit t
 
-  val out : term -> (int, term, subst) term_f t
+  val out : Tm.term -> (int, Tm.term, Tm.subst) term_f t
 end
