@@ -1,4 +1,4 @@
- type ('var, 'term, 'subst) term_f = 
+type ('var, 'term, 'subst) term_f =
   | Var of 'var
   | Lam of 'term
   | App of 'term * 'term
@@ -7,24 +7,24 @@
   | Unit
   | Univ
 
-type ('term, 'subst) subst_f = 
+type ('term, 'subst) subst_f =
   | Id
   | Wk
   | Cmp of 'subst * 'subst
   | Ext of 'subst * 'term
 
-type 'a subject = 
+type 'a subject =
   | Ret of 'a
   | Ask
 
-type 'a ctx = 
+type 'a ctx =
   | CNil
   | CExt of 'a ctx * 'a
 
-type 'a jdg = 
+type 'a jdg =
   | Chk of 'a ctx * 'a subject * 'a
 
-module type Tm = 
+module type Tm =
 sig
   type hole
   type term
@@ -37,7 +37,7 @@ sig
   val into : (int, term, subst) term_f -> term
   val intoS : (term, subst) subst_f -> subst
 
-  val meta : hole -> subst -> term 
+  val meta : hole -> subst -> term
 end
 
 module type Elab =

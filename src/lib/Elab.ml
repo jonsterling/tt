@@ -31,22 +31,23 @@ struct
   let subst ~sb ~tm : term =
     match tm with
     | In tmf ->
-      begin match tmf with
-      | Var _ -> failwith ""
-      | Lam _ -> failwith ""
-      | App (_, _) -> failwith ""
-      | Ax -> tm
-      | Pi (_, _) -> failwith ""
-      | Unit -> tm
-      | Univ -> tm
+      begin
+        match tmf with
+        | Var _ -> failwith ""
+        | Lam _ -> failwith ""
+        | App (_, _) -> failwith ""
+        | Ax -> tm
+        | Pi (_, _) -> failwith ""
+        | Unit -> tm
+        | Univ -> tm
       end
     | Ref (key, sb') -> Ref (key, intoS @@ Cmp (sb, sb'))
 end
 
 module Elab : Elab
   with type term = Tm.term
-  and type subst = Tm.subst
-  and type hole = Tm.hole
+   and type subst = Tm.subst
+   and type hole = Tm.hole
 =
 struct
   type hole = Tm.hole
@@ -92,12 +93,12 @@ struct
   (* TODO:
      - [ ] possibly typecheck the term
      - [ ] allow things other than Ask via unification
-   *)
+  *)
   let fill key tm env =
     match Hashtbl.find_exn env key with
-    | exception Not_found -> failwith ""
+    | exception Not_found -> failwith "[fill]: key not found"
     | Chk (ctx, Ask, ty) -> Hashtbl.set env ~key ~data:(Chk (ctx, Ret tm, ty))
-    | _ -> failwith ""
+    | _ -> failwith "[fill]: expected hole"
 
   let rec out t : (int, term, subst) term_f t =
     match t with
