@@ -81,6 +81,47 @@ struct
   let find key env =
     Hashtbl.find_exn env key (* FIXME: use optional version *)
 
+  exception ExpectedRet
+
+  (* TODO: this could be reformulated with lenses to be much cleaner *)
+
+  let read_and_update (f : Types.term jdg -> Types.term jdg t) key : Types.term jdg t = fun env ->
+    let jdg = find key env in
+    let jdg' = f jdg env in
+    Hashtbl.set env key jdg';
+    jdg'
+
+  let rec force_tm_map : Types.term jdg -> Types.term jdg t =
+    fun jdg ->
+      match jdg with
+      | Chk (_, Ask, _) -> return jdg
+      | Chk (_, Ret (Types.In _), _) -> return jdg
+      | Chk (cx, Ret (Types.Ref (key, sub)), ty) ->
+        try
+          let%bind tm0 = read_tm key in
+          let tm = Tm.subst ~sb:sub ~tm:tm0 in
+          return @@ Chk (cx, Ret tm, ty)
+        with
+        | ExpectedRet -> return jdg
+
+  and force_ty_map : Types.term jdg -> Types.term jdg t =
+    fun jdg ->
+      match jdg with
+      | Chk (_, _, Types.In _) -> return jdg
+      | Chk (cx, tm, Types.Ref (key, sub)) ->
+        let%bind ty0 = read_tm key in
+        let ty = Tm.subst ~sb:sub ~tm:ty0 in
+        return @@ Chk (cx, tm, ty)
+
+  and read_tm key =
+    match%bind read_and_update force_tm_map key with
+    | Chk (_, Ret t, _) -> return t
+    | Chk (_, Ask, _) -> raise ExpectedRet
+
+  let read_ty key =
+    let%bind Chk (_, _, ty) = read_and_update force_ty_map key in
+    return ty
+
   (* TODO:
      - [ ] possibly typecheck the term
      - [ ] allow things other than Ask via unification
@@ -96,9 +137,15 @@ struct
     | Types.In tf -> return tf
     | Types.Ref (key, sub) ->
       match%bind find key with
-      | Chk (_, Ret t', _) -> out @@ Tm.subst ~sb:sub ~tm:t'
+      | Chk (_, Ret t', _) ->
+        let t'' = Tm.subst ~sb:sub ~tm:t' in
+        out t''
       | Chk (_, Ask, _) -> failwith "[out]: Term is a hole"
 
+  let match_goal key =
+    let%bind Chk (cx, _, ty) = read_and_update force_ty_map key in
+    let%bind tyf = out ty in
+    return (cx, tyf)
 end
 
 module Elab (E : ElabCore) =

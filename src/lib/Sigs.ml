@@ -52,4 +52,6 @@ sig
   val fill : Tm.hole -> Tm.term -> unit t
 
   val out : Tm.term -> (int, Tm.term, Tm.subst) term_f t
+
+  val match_goal : Tm.hole -> (Tm.term ctx * (int, Tm.term, Tm.subst) term_f) t
 end
