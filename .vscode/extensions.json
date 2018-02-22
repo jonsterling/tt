@@ -2,6 +2,7 @@
   "recommendations": [
     "EditorConfig.EditorConfig",
     "freebroccolo.reasonml",
+    "freebroccolo.input-assist",
     "stkb.rewrap"
   ]
 }
