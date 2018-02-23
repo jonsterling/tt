@@ -122,8 +122,6 @@ struct
     Hashtbl.find_exn env key (* FIXME: use optional version *)
 
 
-
-  (* TODO: how the hell do I do this with the Base library? It's impossible to find things in their documentation. *)
   let rec pretty_aux env fmt t =
     match t with
     | Types.In tf ->
