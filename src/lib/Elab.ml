@@ -129,15 +129,15 @@ struct
     | Types.In tf ->
       begin
         match tf with
-        | Var i -> Caml.Format.fprintf fmt "#%i" i
-        | Pi (dom, cod) -> Caml.Format.fprintf fmt "(-> %a %a)" (pretty_aux env) dom (pretty_aux env) cod
-        | Unit -> Caml.Format.fprintf fmt "Unit"
-        | _ -> Caml.Format.fprintf fmt "???"
+        | Var i -> Fmt.pf fmt "#%i" i
+        | Pi (dom, cod) -> Fmt.pf fmt "(-> %a %a)" (pretty_aux env) dom (pretty_aux env) cod
+        | Unit -> Fmt.pf fmt "Unit"
+        | _ -> Fmt.pf fmt "???"
       end
     | Types.Ref (key, sb) ->
       match find key env with
-      | Chk (_, Ask, _) -> Caml.Format.fprintf fmt "<?>"
-      | Chk (_, Ret t, _) -> Caml.Format.fprintf fmt "%a" (pretty_aux env) @@ Tm.subst ~sb ~tm:t
+      | Chk (_, Ask, _) -> Fmt.pf fmt "<?>"
+      | Chk (_, Ret t, _) -> Fmt.pf fmt "%a" (pretty_aux env) @@ Tm.subst ~sb ~tm:t
 
 
   let pretty fmt t env = pretty_aux env fmt t
@@ -192,7 +192,7 @@ struct
     | exception Not_found -> failwith "[fill]: key not found"
     | Chk (ctx, Ask, ty) -> Hashtbl.set env ~key ~data:(Chk (ctx, Ret tm, ty))
     | Chk (_, Ret t, _) ->
-      pretty Caml.Format.std_formatter t env;
+      pretty Fmt.stdout t env;
       failwith @@ "[fill]: expected hole, but got something else"
 
   let rec out t =

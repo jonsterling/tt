@@ -38,7 +38,7 @@ let example =
 let foo =
   let%bind key = example in
   match%bind E.find key with
-  | Chk (_, Ret tm, _) -> E.pretty Caml.Format.std_formatter tm
+  | Chk (_, Ret tm, _) -> E.pretty Fmt.stdout tm
   | _ -> failwith ""
 
 let test = E.run foo
