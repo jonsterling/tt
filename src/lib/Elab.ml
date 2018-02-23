@@ -61,18 +61,18 @@ struct
   and subst ~sb ~tm : term =
     match tm, sb with
     | _, InSb Id -> tm
-    | In tmf, _ ->
-      begin
-        match tmf with
-        | Var ix -> proj ~sb ~ix
-        | Lam bdy -> into @@ Lam (subst ~sb:(S.weaken sb) ~tm:bdy)
-        | App (t1, t2) -> into @@ App (subst ~sb ~tm:t1, subst ~sb ~tm:t2)
-        | Ax -> tm
-        | Pi (dom, cod) -> into @@ Pi (subst ~sb ~tm:dom, subst ~sb:(S.weaken sb) ~tm:cod)
-        | Unit -> tm
-        | Univ -> tm
-      end
+    | In tmf, _ -> subst_f ~sb ~tmf
     | Ref (key, sb'), _ -> Ref (key, intoS @@ Cmp (sb, sb'))
+
+  and subst_f ~sb ~tmf : term =
+    match tmf with
+    | Var ix -> proj ~sb ~ix
+    | Lam bdy -> into @@ Lam (subst ~sb:(S.weaken sb) ~tm:bdy)
+    | App (t1, t2) -> into @@ App (subst ~sb ~tm:t1, subst ~sb ~tm:t2)
+    | Ax -> into tmf
+    | Pi (dom, cod) -> into @@ Pi (subst ~sb ~tm:dom, subst ~sb:(S.weaken sb) ~tm:cod)
+    | Unit -> into tmf
+    | Univ -> into tmf
 end
 
 module ElabCore : ElabCore =
