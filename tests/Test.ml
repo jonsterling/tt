@@ -26,3 +26,11 @@ let lambda key =
     let%bind _ = E.fill key @@ E.Tm.into @@ Lam bdy in
     E.return hbdy
   | _ -> failwith "lambda"
+
+
+let example =
+  let%bind kty = E.alloc @@ Chk (CNil, Ask, E.Tm.into Univ) in
+  let%bind (kdom, kcod) = pi kty in
+  let%bind _ = E.fill kdom @@ E.Tm.into Unit in
+  let%bind _ = E.fill kcod @@ E.Tm.into Unit in
+  E.return kty
