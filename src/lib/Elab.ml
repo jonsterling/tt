@@ -26,22 +26,39 @@ struct
 
   let intoS sbf = InSb sbf
 
+  module S =
+  struct
+    let cmp sb1 sb0 =
+      intoS @@ Cmp (sb1, sb0)
+
+    let ext sb t =
+      intoS @@ Ext (sb, t)
+
+    let wk = intoS Wk
+
+    (* TODO: check this! *)
+    let weaken sb =
+      let x = into @@ Var 0 in
+      let sb0 = cmp sb wk in
+      ext sb0 x
+  end
 
   (* TODO: implement *)
-  let subst ~sb ~tm : term =
-    match tm with
-    | In tmf ->
+  let rec subst ~sb ~tm : term =
+    match tm, sb with
+    | _, InSb Id -> tm
+    | In tmf, _ ->
       begin
         match tmf with
-        | Var _ -> failwith ""
-        | Lam _ -> failwith ""
-        | App (_, _) -> failwith ""
+        | Var _ -> failwith "TODO"
+        | Lam bdy -> into @@ Lam (subst ~sb:(S.weaken sb) ~tm:bdy)
+        | App (t1, t2) -> into @@ App (subst ~sb ~tm:t1, subst ~sb ~tm:t2)
         | Ax -> tm
-        | Pi (_, _) -> failwith ""
+        | Pi (dom, cod) -> into @@ Pi (subst ~sb ~tm:dom, subst ~sb:(S.weaken sb) ~tm:cod)
         | Unit -> tm
         | Univ -> tm
       end
-    | Ref (key, sb') -> Ref (key, intoS @@ Cmp (sb, sb'))
+    | Ref (key, sb'), _ -> Ref (key, intoS @@ Cmp (sb, sb'))
 end
 
 module ElabCore : ElabCore =
