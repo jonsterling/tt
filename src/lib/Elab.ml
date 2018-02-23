@@ -6,7 +6,7 @@ struct
 
   (* Here is where things like hash keys and tags should be kept *)
   type term =
-    | In of (int, term, subst) term_f
+    | In of term term_f
     | Ref of hole * subst
   and subst = InSb of (term, subst) subst_f
 end
@@ -81,9 +81,14 @@ struct
 
   type env = (string, Tm.term jdg) Hashtbl.t
 
-  (* let mk_env: unit -> env = Hashtbl.create (module String) *)
-
   type 'a t = env -> 'a
+
+
+  let mk_env: unit -> env =
+    Hashtbl.create (module String)
+
+  let run m =
+    m @@ mk_env ()
 
   let bind m ~f rho = f (m rho) rho
   let return a _ = a
@@ -104,13 +109,38 @@ struct
         try m env with
         | _ -> alt ms env'
 
+  let global_ix = ref 0
+
   let alloc jdg env =
-    let key = "fresh" in (* TODO *)
+    let ix = !global_ix in
+    let key = Int.to_string ix in
+    global_ix := ix + 1;
     ignore @@ Hashtbl.add env ~key ~data:jdg;
     key
 
   let find key env =
     Hashtbl.find_exn env key (* FIXME: use optional version *)
+
+
+
+  (* TODO: how the hell do I do this with the Base library? It's impossible to find things in their documentation. *)
+  let rec pretty_aux env fmt t =
+    match t with
+    | Types.In tf ->
+      begin
+        match tf with
+        | Var i -> Caml.Format.fprintf fmt "#%i" i
+        | Pi (dom, cod) -> Caml.Format.fprintf fmt "(-> %a %a)" (pretty_aux env) dom (pretty_aux env) cod
+        | Unit -> Caml.Format.fprintf fmt "Unit"
+        | _ -> Caml.Format.fprintf fmt "???"
+      end
+    | Types.Ref (key, sb) ->
+      match find key env with
+      | Chk (_, Ask, _) -> Caml.Format.fprintf fmt "<?>"
+      | Chk (_, Ret t, _) -> Caml.Format.fprintf fmt "%a" (pretty_aux env) @@ Tm.subst ~sb ~tm:t
+
+
+  let pretty fmt t env = pretty_aux env fmt t
 
   exception ExpectedRet
 
@@ -161,7 +191,9 @@ struct
     match Hashtbl.find_exn env key with
     | exception Not_found -> failwith "[fill]: key not found"
     | Chk (ctx, Ask, ty) -> Hashtbl.set env ~key ~data:(Chk (ctx, Ret tm, ty))
-    | _ -> failwith "[fill]: expected hole"
+    | Chk (_, Ret t, _) ->
+      pretty Caml.Format.std_formatter t env;
+      failwith @@ "[fill]: expected hole, but got something else"
 
   let rec out t =
     match t with
@@ -177,6 +209,8 @@ struct
     let%bind Chk (cx, _, ty) = read_and_update force_ty_map key in
     let%bind tyf = out ty in
     return (cx, tyf)
+
+
 end
 
 module Elab (E : ElabCore) =

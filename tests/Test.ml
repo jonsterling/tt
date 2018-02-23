@@ -34,3 +34,11 @@ let example =
   let%bind _ = E.fill kdom @@ E.Tm.into Unit in
   let%bind _ = E.fill kcod @@ E.Tm.into Unit in
   E.return kty
+
+let foo =
+  let%bind key = example in
+  match%bind E.find key with
+  | Chk (_, Ret tm, _) -> E.pretty Caml.Format.std_formatter tm
+  | _ -> failwith ""
+
+let test = E.run foo

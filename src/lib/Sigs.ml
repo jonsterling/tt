@@ -1,5 +1,5 @@
-type ('var, 'term, 'subst) term_f =
-  | Var of 'var
+type 'term term_f =
+  | Var of int
   | Lam of 'term
   | App of 'term * 'term
   | Ax
@@ -24,6 +24,11 @@ type 'a ctx =
 type 'a jdg =
   | Chk of 'a ctx * 'a subject * 'a
 
+module PureTm =
+struct
+  type t = In of t term_f
+end
+
 module type Tm =
 sig
   type hole
@@ -34,7 +39,7 @@ sig
   val subst : sb:subst -> tm:term -> term
 
   (* this should induce sharing *)
-  val into : (int, term, subst) term_f -> term
+  val into : term term_f -> term
   val intoS : (term, subst) subst_f -> subst
 
   val meta : hole -> subst -> term
@@ -47,11 +52,15 @@ sig
 
   module Tm : Tm
 
+  val pretty : Caml.Format.formatter -> Tm.term -> unit t
+
+  val run : 'a t -> 'a
+
   val alloc : Tm.term jdg -> Tm.hole t
   val find : Tm.hole -> Tm.term jdg t
   val fill : Tm.hole -> Tm.term -> unit t
 
-  val out : Tm.term -> (int, Tm.term, Tm.subst) term_f t
+  val out : Tm.term -> Tm.term term_f t
 
-  val match_goal : Tm.hole -> (Tm.term ctx * (int, Tm.term, Tm.subst) term_f) t
+  val match_goal : Tm.hole -> (Tm.term ctx * Tm.term term_f) t
 end
