@@ -26,31 +26,45 @@ struct
 
   let intoS sbf = InSb sbf
 
+
+  module T =
+  struct
+    let var ~ix =
+      into @@ Var ix
+  end
+
   module S =
   struct
-    let cmp sb1 sb0 =
-      intoS @@ Cmp (sb1, sb0)
+    let cmp sb1 sb0 = intoS @@ Cmp (sb1, sb0)
 
-    let ext sb t =
-      intoS @@ Ext (sb, t)
+    let ext sb t = intoS @@ Ext (sb, t)
 
     let wk = intoS Wk
 
     (* TODO: check this! *)
     let weaken sb =
-      let x = into @@ Var 0 in
+      let x = T.var 0 in
       let sb0 = cmp sb wk in
       ext sb0 x
   end
 
-  (* TODO: implement *)
-  let rec subst ~sb ~tm : term =
+
+  (* TODO: Check this! I wrote it blind*)
+  let rec proj ~sb ~ix =
+    let InSb sbf = sb in
+    match sbf with
+    | Id -> T.var ~ix
+    | Cmp (sb1, sb0) -> subst ~sb:sb1 ~tm:(proj ~sb:sb0 ~ix)
+    | Ext (_, t) -> if ix = 0 then t else proj ~sb ~ix:(ix - 1)
+    | Wk -> T.var ~ix:(ix + 1)
+
+  and subst ~sb ~tm : term =
     match tm, sb with
     | _, InSb Id -> tm
     | In tmf, _ ->
       begin
         match tmf with
-        | Var _ -> failwith "TODO"
+        | Var ix -> proj ~sb ~ix
         | Lam bdy -> into @@ Lam (subst ~sb:(S.weaken sb) ~tm:bdy)
         | App (t1, t2) -> into @@ App (subst ~sb ~tm:t1, subst ~sb ~tm:t2)
         | Ax -> tm
