@@ -102,7 +102,7 @@ sig
 
 
   val find : key -> ('jdg, 'a) t
-  val alloc : key -> 'jdg -> ('a, unit) t
+  val alloc : 'jdg -> ('a, key) t
 
   (* INVARIANT: the update must be monotone in the sense of the information order on 'jdg.
      Behavior is UNDEFINED when the update is not an improvement. *)
@@ -113,19 +113,23 @@ module type ProofState =
 sig
   module Env : EnvMonad
 
-  type jdg
-  type 'a term_f
-  type 'a m = (jdg, 'a) Env.t
-
-  include EffectfulTermModel
-    with type 'a f := 'a term_f
-     and type 'a m := 'a m
+  type t
 
   (* A subject is Ask if it has not been refined yet; it is Ret if it has been refined.
      The information order is that [Ask <= Ret t]. *)
   type subject =
     | Ask
     | Ret of t
+
+  type jdg = {cx : t list; ty : t; hole : subject}
+  type 'a term_f
+  type 'a m = (jdg, 'a) Env.t
+
+  include EffectfulTermModel
+    with type 'a f := 'a term_f
+     and type 'a m := 'a m
+     and type t := t
+
 
   val hole : Env.key -> t
   val out : t -> [`F of t term_f | `V of int] m
