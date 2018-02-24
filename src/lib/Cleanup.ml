@@ -17,18 +17,8 @@ sig
      binders it is being called. This feels a little ad-hoc, but it seems
      to suffice. *)
   val map : f:(int -> 'a -> 'b) -> 'a t -> 'b t
-end
 
-module LC =
-struct
-  type 'a t =
-    | Lam of 'a
-    | App of 'a * 'a
-
-  let map ~f t =
-    match t with
-    | Lam a -> Lam (f 1 a)
-    | App (a1, a2) -> App (f 0 a1, f 0 a2)
+  val pp : ih:('a Fmt.t) -> 'a t Fmt.t
 end
 
 module type Model =
@@ -41,11 +31,15 @@ sig
   val subst : (t, t) tensor -> t
 end
 
-module type TermModel =
+module type EffectfulTermModel =
 sig
   include Model
-  val out : t -> [`F of t f | `V of int]
+  type 'a m
+  val out : t -> [`F of t f | `V of int] m
+  val pp : Caml.Format.formatter -> t -> unit m
 end
+
+module type TermModel = EffectfulTermModel with type 'a m := 'a
 
 module Pure (S : Signature) : TermModel with type 'a f = 'a S.t =
 struct
@@ -80,7 +74,14 @@ struct
     | Cmp (sb1, sb0) -> subst @@ Clo (proj sb0 ix, sb1)
     | Ext (_, t) -> if ix = 0 then t else proj sb (ix - 1)
     | Wk -> Var (ix + 1)
+
+
+  let rec pp fmt t =
+    match t with
+    | Var i -> Fmt.pf fmt "#%i" i
+    | In tf -> S.pp pp fmt tf
 end
+
 
 module type EnvMonad =
 sig
@@ -91,6 +92,14 @@ sig
 
   val return : 'a -> ('t, 'a) t
   val bind : ('t, 'a) t -> ('a -> ('t, 'b) t) -> ('t, 'b) t
+
+  (* This is intended to be abstract. Sometimes to interface with other code outside the monad,
+     we need a way to turn a monadic action into a value, inside the monad. This is helpful
+     when dealing with higher order functions, such as in the case of pretty-printers. *)
+  type 't env
+  val get_env : ('t, 't env) t
+  val run : 't env -> ('t, 'a) t -> 'a
+
 
   val find : key -> ('t, 'a) t
   val alloc : key -> 't -> ('a, unit) t
@@ -105,10 +114,12 @@ sig
   module Env : EnvMonad
 
   type jdg
+  type 'a term_f
   type 'a m = (jdg, 'a) Env.t
 
-  type 'a term_f
-  include Model with type 'a f := 'a term_f
+  include EffectfulTermModel
+    with type 'a f := 'a term_f
+     and type 'a m := 'a m
 
   (* A subject is Ask if it has not been refined yet; it is Ret if it has been refined.
      The information order is that [Ask <= Ret t]. *)
@@ -192,6 +203,14 @@ struct
           r := `Done t';
           out t'
 
+  let rec pp fmt t =
+    M.bind (out t) @@ fun tf ->
+    match tf with
+    | `V i -> M.return @@ Fmt.pf fmt "#%i" i
+    | `F tf ->
+      M.bind M.get_env @@ fun env ->
+      M.return @@
+      S.pp (fun fmt t -> M.run env (pp fmt t)) fmt tf
 
   let hole key =
     Ref (ref @@ `Defer (key, Id))

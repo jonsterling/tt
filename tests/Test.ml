@@ -42,3 +42,31 @@ let foo =
   | _ -> failwith ""
 
 let test = E.run foo
+
+
+
+
+open Cleanup
+
+
+module LC =
+struct
+  type 'a t =
+    | Lam of 'a
+    | App of 'a * 'a
+
+  let map ~f t =
+    match t with
+    | Lam a -> Lam (f 1 a)
+    | App (a1, a2) -> App (f 0 a1, f 0 a2)
+
+  let pp ~ih fmt t =
+    match t with
+    | Lam a -> Fmt.pf fmt "(lam %a)" ih a
+    | App (a0, a1) -> Fmt.pf fmt "(app %a %a)" ih a0 ih a1
+end
+
+module LCPure = Pure (LC)
+
+let test_tm = LCPure.into @@ LC.Lam (LCPure.into @@ LC.App (LCPure.var 0, LCPure.var 0))
+let _ = LCPure.pp Fmt.stdout test_tm
