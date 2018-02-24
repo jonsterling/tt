@@ -68,5 +68,9 @@ end
 
 module LCPure = Pure (LC)
 
-let test_tm = LCPure.into @@ LC.Lam (LCPure.into @@ LC.App (LCPure.var 0, LCPure.var 0))
+let lam t = LCPure.into @@ LC.Lam t
+let app t1 t2 = LCPure.into @@ LC.App (t1, t2)
+let var = LCPure.var
+
+let test_tm = lam @@ app (var 0) (var 0)
 let _ = LCPure.pp Fmt.stdout test_tm
