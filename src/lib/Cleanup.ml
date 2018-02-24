@@ -6,7 +6,7 @@ type 'term subst =
   | Cmp of 'term subst * 'term subst
   | Ext of 'term subst * 'term
 
-type ('a, 'b) tensor = Clo of 'a * 'b subst
+type ('a, 'b) tensor = 'a * 'b subst
 
 module type Signature =
 sig
@@ -62,16 +62,16 @@ struct
     | 0 -> sb
     | _ -> weaken (n - 1) @@ Ext (Cmp (sb, Wk), Var 0)
 
-  let rec subst (Clo (t, sb)) =
+  let rec subst (t, sb) =
     match sb, t with
     | Id, _ -> t
     | _, Var i -> proj sb i
-    | _, In tf -> In (S.map (fun i a -> subst @@ Clo (a, weaken i sb)) tf)
+    | _, In tf -> In (S.map (fun i a -> subst (a, weaken i sb)) tf)
 
   and proj sb ix =
     match sb with
     | Id -> Var ix
-    | Cmp (sb1, sb0) -> subst @@ Clo (proj sb0 ix, sb1)
+    | Cmp (sb1, sb0) -> subst (proj sb0 ix, sb1)
     | Ext (_, t) -> if ix = 0 then t else proj sb (ix - 1)
     | Wk -> Var (ix + 1)
 
@@ -145,7 +145,7 @@ struct
   type t =
     | Var of int
     | In of t S.t
-    | Ref of [`Defer of M.key * t subst | `Done of t] ref
+    | Ref of [`Defer of (M.key, t) tensor | `Done of t] ref
     (* Wrapping the above in a reference to a sum lets me avoid
        having to destructively update the environment in order to
        make updates that memoize lookup-and-subst operations; these
@@ -165,20 +165,20 @@ struct
     | 0 -> sb
     | _ -> weaken (n - 1) @@ Ext (Cmp (sb, Wk), Var 0)
 
-  let rec subst (Clo (t, sb)) =
+  let rec subst (t, sb) =
     match sb, t with
     | Id, _ -> t
     | _, Var i -> proj sb i
-    | _, In tf -> In (S.map (fun i a -> subst @@ Clo (a, weaken i sb)) tf)
+    | _, In tf -> In (S.map (fun i a -> subst (a, weaken i sb)) tf)
     | _, Ref r ->
       match !r with
       | `Defer (key, sb') -> Ref (ref @@ `Defer (key, Cmp (sb, sb')))
-      | `Done t -> subst @@ Clo (t, sb)
+      | `Done t -> subst (t, sb)
 
   and proj sb ix =
     match sb with
     | Id -> Var ix
-    | Cmp (sb1, sb0) -> subst @@ Clo (proj sb0 ix, sb1)
+    | Cmp (sb1, sb0) -> subst (proj sb0 ix, sb1)
     | Ext (_, t) -> if ix = 0 then t else proj sb (ix - 1)
     | Wk -> Var (ix + 1)
 
@@ -199,7 +199,7 @@ struct
         match hole with
         | Ask -> failwith "[out]: got Ask"
         | Ret t ->
-          let t' = subst @@ Clo (t, sb) in
+          let t' = subst (t, sb) in
           r := `Done t';
           out t'
 
