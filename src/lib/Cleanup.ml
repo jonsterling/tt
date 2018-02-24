@@ -69,9 +69,10 @@ struct
     | _ -> weaken (n - 1) @@ Ext (Cmp (sb, Wk), Var 0)
 
   let rec subst (Clo (t, sb)) =
-    match t with
-    | Var i -> proj sb i
-    | In tf -> In (S.map (fun i a -> subst @@ Clo (a, weaken i sb)) tf)
+    match sb, t with
+    | Id, _ -> t
+    | _, Var i -> proj sb i
+    | _, In tf -> In (S.map (fun i a -> subst @@ Clo (a, weaken i sb)) tf)
 
   and proj sb ix =
     match sb with
@@ -101,10 +102,11 @@ struct
     | _ -> weaken (n - 1) @@ Ext (Cmp (sb, Wk), Var 0)
 
   let rec subst (Clo (t, sb)) =
-    match t with
-    | Var i -> proj sb i
-    | In tf -> In (S.map (fun i a -> subst @@ Clo (a, weaken i sb)) tf)
-    | Ref (key, sb') -> Ref (key, Cmp (sb, sb'))
+    match sb, t with
+    | Id, _ -> t
+    | _, Var i -> proj sb i
+    | _, In tf -> In (S.map (fun i a -> subst @@ Clo (a, weaken i sb)) tf)
+    | _, Ref (key, sb') -> Ref (key, Cmp (sb, sb'))
 
   and proj sb ix =
     match sb with
