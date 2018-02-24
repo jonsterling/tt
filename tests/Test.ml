@@ -50,16 +50,19 @@ struct
       Env.improve key E.{cx = cx; ty = ty; hole = E.Ret tm}
     | _ -> failwith "fill"
 
-  let lambda key =
+  let match_hole key =
     match%bind Env.find key with
-    | E.{cx;ty;hole = E.Ask} ->
-      begin
-        match%bind E.out ty with
-        | `F (LC.Pi (dom, cod)) ->
-          let%bind (kbdy, bdy) = ask (dom :: cx) cod in
-          let%bind _ = fill key @@ E.into @@ LC.Lam bdy in
-          Env.return kbdy
-        | _ -> failwith "expected pi!"
-      end
-    | _ -> failwith ""
+    | E.{cx; ty; hole = E.Ask} ->
+      let%bind pat = E.out ty in
+      Env.return (cx, pat)
+    | _ -> failwith "match_hole"
+
+  let lambda key =
+    match%bind match_hole key with
+    | cx, `F (LC.Pi (dom, cod)) ->
+      let%bind (kbdy, bdy) = ask (dom :: cx) cod in
+      let%bind _ = fill key @@ E.into @@ LC.Lam bdy in
+      Env.return kbdy
+    | _ -> failwith "lambda"
+
 end
