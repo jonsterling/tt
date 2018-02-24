@@ -8,7 +8,9 @@ struct
   type 'a t =
     | Lam of 'a
     | App of 'a * 'a
+    | Pair of 'a * 'a
     | Pi of 'a * 'a
+    | Sg of 'a * 'a
     | Unit
     | Univ
 
@@ -16,7 +18,9 @@ struct
     match t with
     | Lam a -> Lam (f 1 a)
     | App (a1, a2) -> App (f 0 a1, f 0 a2)
+    | Pair (a1, a2) -> Pair (f 0 a1, f 0 a2)
     | Pi (dom, cod) -> Pi (f 0 dom, f 1 cod)
+    | Sg (dom, cod) -> Sg (f 0 dom, f 1 cod)
     | Unit -> Unit
     | Univ -> Univ
 
@@ -24,7 +28,9 @@ struct
     match t with
     | Lam a -> Fmt.pf fmt "(lam %a)" ih a
     | App (a0, a1) -> Fmt.pf fmt "(app %a %a)" ih a0 ih a1
+    | Pair (a0, a1) -> Fmt.pf fmt ("cons %a %a") ih a0 ih a1
     | Pi (dom, cod) -> Fmt.pf fmt "(-> %a %a)" ih dom ih cod
+    | Sg (dom, cod) -> Fmt.pf fmt "(* %a %a)" ih dom ih cod
     | Unit -> Fmt.pf fmt "unit"
     | Univ -> Fmt.pf fmt "univ"
 end
@@ -64,5 +70,14 @@ struct
       let%bind _ = fill key @@ E.into @@ LC.Lam bdy in
       Env.return kbdy
     | _ -> failwith "lambda"
+
+  let pair key =
+    match%bind match_hole key with
+    | cx, `F (LC.Sg (dom, cod)) ->
+      let%bind (k1, t1) = ask cx dom in
+      let%bind (k2, t2) = ask cx @@ E.subst (cod, Ext (Id, t1)) in
+      let%bind _ = fill key @@ E.into @@ LC.Pair (t1, t2) in
+      Env.return (k1, k2)
+    | _ -> failwith "pair"
 
 end
