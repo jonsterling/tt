@@ -9,7 +9,7 @@ Elaboration structure and algorithm is inspired by the following, in no specific
 + Sterling and Harper's "Dependent LCF"
 + Huet's "Constructive Engine"
 
-We take the idea of tactics as information-increasing transitions between valid contexts (which contain definitional extensions) from McBride; unlike McBride we use explicit substitutions.
+We take the idea of tactics as information-increasing transitions between valid contexts (which contain definitional extensions) from McBride; unlike McBride we use explicit substitutions. Because of this difference, we do not use McBride's "attack, guess, solve" yoga in order to maintain correctness of intermediate states.
 
 It is possible to view this as a generalization of Dependent LCF's proof state structure to include definitional extension; while Dependent LCF probably cannot be implemented efficiently, this generalization can.
 
