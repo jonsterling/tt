@@ -95,7 +95,7 @@ sig
   val find : key -> ('t, 'a) t
   val alloc : key -> 't -> ('a, unit) t
 
-  (* INVARIANT: the update most be monotone in the sense of the information order on 't.
+  (* INVARIANT: the update must be monotone in the sense of the information order on 't.
      Behavior is UNDEFINED when the update is not an improvement. *)
   val improve : key -> 't -> ('a, unit) t
 end
