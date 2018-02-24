@@ -86,10 +86,18 @@ module type EnvMonad =
 sig
   type key
 
+  (* Semantically, 't should be a poset; we refer to its order as the "information order". *)
   type ('t, 'a) t
+
   val return : 'a -> ('t, 'a) t
   val bind : ('t, 'a) t -> ('a -> ('t, 'b) t) -> ('t, 'b) t
+
   val find : key -> ('t, 'a) t
+  val alloc : key -> 't -> ('a, unit) t
+
+  (* INVARIANT: the update most be monotone in the sense of the information order on 't.
+     Behavior is UNDEFINED when the update is not an improvement. *)
+  val improve : key -> 't -> ('a, unit) t
 end
 
 (* This is a model with references to holes *)
@@ -99,12 +107,14 @@ sig
      exotic terms are references into the proof state. *)
   include Model with type 'a f = 'a S.t
 
-  (* A hole is Ask if it has not been refined yet; it is Ret if it has been refined. *)
+  (* A hole is Ask if it has not been refined yet; it is Ret if it has been refined.
+     The information order is that [Ask <= Ret t]. *)
   type hole =
     | Ask
     | Ret of t
 
-  (* Invariant: if we have {cx; ty; hole = Ret tm}, then we must have [cx !- tm : ty]. *)
+  (* Invariant: if we have {cx; ty; hole = Ret tm}, then we must have [cx !- tm : ty].
+     The information order is completely determined by the information order of [hole]. *)
   type jdg = {cx : t list; ty : t; hole : hole}
 
   val hole : M.key -> t
@@ -124,11 +134,11 @@ struct
     | Var of int
     | In of t S.t
     | Ref of [`Defer of M.key * t subst | `Done of t] ref
-  (* Wrapping the above in a reference to a sum lets me avoid
-     having to destructively update the environment in order to
-     make updates that memoize lookup-and-subst operations; these
-     are different from other updates to the environment in that they
-     contain no change in information. Better to deal with it locally! *)
+    (* Wrapping the above in a reference to a sum lets me avoid
+       having to destructively update the environment in order to
+       make updates that memoize lookup-and-subst operations; these
+       are different from other updates to the environment in that they
+       contain no change in information. Better to deal with it locally! *)
 
   type hole = Ask | Ret of t
   type jdg = {cx : t list; ty : t; hole : hole}
@@ -174,12 +184,12 @@ struct
       | `Done t -> out t
       | `Defer (key, sb) ->
         M.bind (M.find key) @@ fun {hole;_} ->
-          match hole with
-          | Ask -> failwith "[out]: got Ask"
-          | Ret t ->
-            let t' = subst @@ Clo (t, sb) in
-            r := `Done t';
-            out t'
+        match hole with
+        | Ask -> failwith "[out]: got Ask"
+        | Ret t ->
+          let t' = subst @@ Clo (t, sb) in
+          r := `Done t';
+          out t'
 
 
   let hole key =
