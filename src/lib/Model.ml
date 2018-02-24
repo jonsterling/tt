@@ -42,16 +42,16 @@ struct
   let rec weaken n sb =
     match n with
     | 0 -> sb
-    | _ -> weaken (n - 1) @@ Subst.Ext (Subst.Cmp (sb, Subst.Wk), Var 0)
+    | _ -> weaken (n - 1) @@ Subst.ext (Subst.cmp sb Subst.wk) (Var 0)
 
   let rec subst (t, sb) =
-    match sb, t with
+    match Subst.out sb, t with
     | Subst.Id, _ -> t
     | _, Var i -> proj sb i
     | _, In tf -> In (S.map (fun i a -> subst (a, weaken i sb)) tf)
 
   and proj sb ix =
-    match sb with
+    match Subst.out sb with
     | Subst.Id -> Var ix
     | Subst.Cmp (sb1, sb0) -> subst (proj sb0 ix, sb1)
     | Subst.Ext (_, t) -> if ix = 0 then t else proj sb (ix - 1)

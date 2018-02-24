@@ -76,7 +76,7 @@ struct
     match%bind match_hole key with
     | cx, `F (LC.Sg (dom, cod)) ->
       let%bind (k1, t1) = ask cx dom in
-      let%bind (k2, t2) = ask cx @@ E.subst (cod, Subst.Ext (Subst.Id, t1)) in
+      let%bind (k2, t2) = ask cx @@ E.subst (cod, Subst.ext Subst.id t1) in
       let%bind _ = fill key @@ E.into @@ LC.Pair (t1, t2) in
       Env.return (k1, k2)
     | _ -> failwith "pair"
