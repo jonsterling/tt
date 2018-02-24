@@ -82,28 +82,39 @@ struct
     | Wk -> Var (ix + 1)
 end
 
-module type ProofState =
+module type EnvMonad =
 sig
   type key
 
   type ('t, 'a) t
   val return : 'a -> ('t, 'a) t
   val bind : ('t, 'a) t -> ('a -> ('t, 'b) t) -> ('t, 'b) t
-
   val find : key -> ('t, 'a) t
 end
 
 (* This is a model with references to holes *)
-module Disect (M : ProofState) (S : Signature) :
+module ProofState (M : EnvMonad) (S : Signature) :
 sig
+  (* This is a non-initial model, because it contains exotic terms; these
+     exotic terms are references into the proof state. *)
   include Model with type 'a f = 'a S.t
 
-  type hole = Ask | Ret of t
+  (* A hole is Ask if it has not been refined yet; it is Ret if it has been refined. *)
+  type hole =
+    | Ask
+    | Ret of t
+
+  (* Invariant: if we have {cx; ty; hole = Ret tm}, then we must have [cx !- tm : ty]. *)
   type jdg = {cx : t list; ty : t; hole : hole}
-  type 'a m = (jdg, 'a) M.t
 
   val hole : M.key -> t
 
+  (* The proof state monad *)
+  type 'a m = (jdg, 'a) M.t
+
+  (* Within the proof state monad, we can pattern match on a term.
+     This has to be in the monad, because it is the environment which
+     gives meaning to the exotic terms / hole references. *)
   val out : t -> [`F of t f | `V of int] m
 end =
 struct
@@ -149,6 +160,11 @@ struct
     | Ext (_, t) -> if ix = 0 then t else proj sb (ix - 1)
     | Wk -> Var (ix + 1)
 
+  (* The clever bit is that when we hit a reference into the proof state,
+     we look it up and perform its associated deferred substitution; then
+     we destructively update the reference accordingly. This is justified
+     because we require as an invariant that updates to the proof state be
+     monotone. *)
   let rec out t =
     match t with
     | Var i -> M.return @@ `V i
