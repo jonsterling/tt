@@ -100,35 +100,36 @@ sig
   val improve : key -> 't -> ('a, unit) t
 end
 
-(* This is a model with references to holes *)
-module ProofState (M : EnvMonad) (S : Signature) :
+module type ProofState =
 sig
-  (* This is a non-initial model, because it contains exotic terms; these
-     exotic terms are references into the proof state. *)
-  include Model with type 'a f = 'a S.t
+  module Env : EnvMonad
 
-  (* A hole is Ask if it has not been refined yet; it is Ret if it has been refined.
+  type jdg
+  type 'a m = (jdg, 'a) Env.t
+
+  type 'a term_f
+  include Model with type 'a f := 'a term_f
+
+  (* A subject is Ask if it has not been refined yet; it is Ret if it has been refined.
      The information order is that [Ask <= Ret t]. *)
-  type hole =
+  type subject =
     | Ask
     | Ret of t
 
-  (* Invariant: if we have {cx; ty; hole = Ret tm}, then we must have [cx !- tm : ty].
-     The information order is completely determined by the information order of [hole]. *)
-  type jdg = {cx : t list; ty : t; hole : hole}
+  val hole : Env.key -> t
+  val out : t -> [`F of t term_f | `V of int] m
+end
 
-  val hole : M.key -> t
 
-  (* The proof state monad *)
-  type 'a m = (jdg, 'a) M.t
-
-  (* Within the proof state monad, we can pattern match on a term.
-     This has to be in the monad, because it is the environment which
-     gives meaning to the exotic terms / hole references. *)
-  val out : t -> [`F of t f | `V of int] m
-end =
+(* This is a model with references to holes *)
+module ProofState (M : EnvMonad) (S : Signature) :
+  ProofState
+  with module Env = M
+   and type 'a term_f = 'a S.t
+=
 struct
-  type 'a f = 'a S.t
+  module Env = M
+  type 'a term_f = 'a S.t
 
   type t =
     | Var of int
@@ -140,8 +141,8 @@ struct
        are different from other updates to the environment in that they
        contain no change in information. Better to deal with it locally! *)
 
-  type hole = Ask | Ret of t
-  type jdg = {cx : t list; ty : t; hole : hole}
+  type subject = Ask | Ret of t
+  type jdg = {cx : t list; ty : t; hole : subject}
   type 'a m = (jdg, 'a) M.t
 
   let var i = Var i
