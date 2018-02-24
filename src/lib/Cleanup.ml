@@ -1,10 +1,10 @@
 (* In this file are some ideas to clean up the treatment of abstract syntax *)
 
-type 'jdgerm subst =
+type 'term subst =
   | Id
   | Wk
-  | Cmp of 'jdgerm subst * 'jdgerm subst
-  | Ext of 'jdgerm subst * 'jdgerm
+  | Cmp of 'term subst * 'term subst
+  | Ext of 'term subst * 'term
 
 type ('a, 'b) tensor = 'a * 'b subst
 
