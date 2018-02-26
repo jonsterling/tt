@@ -2,10 +2,8 @@ open Signature
 open Model
 open EnvMonad
 
-module type ProofState =
-sig
-  module Env : EnvMonad
-
+(* This is a model with references to holes *)
+module ProofState (M : EnvMonad) (S : Signature) : sig
   type t
 
   (* A subject is Ask if it has not been refined yet; it is Ret if it has been refined.
@@ -14,29 +12,27 @@ sig
     | Ask
     | Ret of t
 
-  type jdg = {cx : t list; ty : t; hole : subject}
-  type 'a term_f
-  type 'a m = ('a, jdg) Env.t
+  type jdg = {
+    cx : t list;
+    ty : t;
+    hole : subject;
+  }
+
+  type 'a term_f = 'a S.t
+
+  type 'a m = ('a, jdg) M.t
 
   include EffectfulTermModel
     with type 'a f := 'a term_f
      and type 'a m := 'a m
      and type t := t
 
+  val hole : M.key -> t
 
-  val hole : Env.key -> t
   val out : t -> [`F of t term_f | `V of int] m
-end
-
-
-(* This is a model with references to holes *)
-module ProofState (M : EnvMonad) (S : Signature) :
-  ProofState
-  with module Env = M
-   and type 'a term_f = 'a S.t
-=
-struct
+end = struct
   module Env = M
+
   type 'a term_f = 'a S.t
 
   type t =
@@ -49,8 +45,16 @@ struct
        are different from other updates to the environment in that they
        contain no change in information. Better to deal with it locally! *)
 
-  type subject = Ask | Ret of t
-  type jdg = {cx : t list; ty : t; hole : subject}
+  type subject =
+    | Ask
+    | Ret of t
+
+  type jdg = {
+    cx : t list;
+    ty : t;
+    hole : subject;
+  }
+
   type 'a m = ('a, jdg) M.t
 
   let var i = Var i
@@ -114,5 +118,4 @@ struct
 
   let hole key =
     Ref (ref @@ `Defer (key, Subst.id))
-
 end

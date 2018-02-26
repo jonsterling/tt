@@ -1,5 +1,4 @@
-module type Signature =
-sig
+module type Signature = sig
   (* This is meant to be the signature endofunctor *)
   type 'a t
 

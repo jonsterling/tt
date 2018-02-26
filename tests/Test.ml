@@ -4,8 +4,7 @@ open EnvMonad
 open ProofState
 
 
-module LC =
-struct
+module LC = struct
   type 'a t =
     | Lam of 'a
     | App of 'a * 'a
@@ -38,12 +37,10 @@ end
 
 module LCPure = Pure (LC)
 
-module Tac (Env : EnvMonad) =
-struct
+module Tac (Env : EnvMonad) = struct
   module E = ProofState (Env) (LC)
 
-  module Let_syntax =
-  struct
+  module Let_syntax = struct
     let bind m ~f = Env.bind m f
   end
 

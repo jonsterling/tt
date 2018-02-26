@@ -4,9 +4,10 @@ type ('a, 's) f =
   | Cmp of 's * 's
   | Ext of 's * 'a
 
-type 'a t = In of ('a, 'a t) f
-type ('a, 'b) tensor = 'a * 'b t
+type 'a t =
+  | In of ('a, 'a t) f
 
+type ('a, 'b) tensor = 'a * 'b t
 
 let out s =
   let In sf = s in
@@ -15,6 +16,9 @@ let out s =
 let into sf = In sf
 
 let id = into Id
+
 let wk = into Wk
+
 let cmp s2 s1 = into @@ Cmp (s2, s1)
+
 let ext s t = into @@ Ext (s, t)
