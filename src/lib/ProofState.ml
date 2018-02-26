@@ -5,22 +5,27 @@ open EnvMonad
 (* This is a model with references to holes *)
 module ProofState (M : EnvMonad) (S : Signature) : sig
   type t
+  [@@deriving (compare, sexp, show)]
 
   (* A subject is Ask if it has not been refined yet; it is Ret if it has been refined.
      The information order is that [Ask <= Ret t]. *)
   type subject =
     | Ask
     | Ret of t
+  [@@deriving (compare, sexp, show)]
 
   type jdg = {
     cx : t list;
     ty : t;
     hole : subject;
   }
+  [@@deriving (compare, sexp, show)]
 
   type 'a term_f = 'a S.t
+  [@@deriving (compare, sexp, show)]
 
   type 'a m = ('a, jdg) M.t
+  [@@deriving (compare, sexp, show)]
 
   include EffectfulTermModel
     with type 'a f := 'a term_f
@@ -34,11 +39,13 @@ end = struct
   module Env = M
 
   type 'a term_f = 'a S.t
+  [@@deriving (compare, sexp, show)]
 
   type t =
     | Var of int
     | In of t S.t
     | Ref of [`Defer of (M.key, t) Subst.tensor | `Done of t] ref
+  [@@deriving (compare, sexp, show)]
     (* Wrapping the above in a reference to a sum lets me avoid
        having to destructively update the environment in order to
        make updates that memoize lookup-and-subst operations; these
@@ -48,14 +55,17 @@ end = struct
   type subject =
     | Ask
     | Ret of t
+  [@@deriving (compare, sexp, show)]
 
   type jdg = {
     cx : t list;
     ty : t;
     hole : subject;
   }
+  [@@deriving (compare, sexp, show)]
 
   type 'a m = ('a, jdg) M.t
+  [@@deriving (compare, sexp, show)]
 
   let var i = Var i
 
@@ -105,14 +115,14 @@ end = struct
             out t'
         end
 
-  let rec pp fmt t =
+  let rec pretty fmt t =
     M.bind (out t) ~f:begin fun tf ->
       match tf with
       | `V i -> M.return @@ Fmt.pf fmt "#%i" i
       | `F tf ->
         M.bind M.get_env ~f:begin fun env ->
           M.return @@
-          S.pp (fun fmt t -> M.run env (pp fmt t)) fmt tf
+          S.pretty (fun fmt t -> M.run env (pretty fmt t)) fmt tf
         end
     end
 

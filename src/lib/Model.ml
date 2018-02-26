@@ -6,6 +6,7 @@ module type Model = sig
 
   (* algebra for the signature endofunctor *)
   type t
+  [@@deriving (compare, sexp, show)]
 
   val into : t f -> t
 
@@ -21,7 +22,7 @@ module type EffectfulTermModel = sig
 
   val out : t -> [`F of t f | `V of int] m
 
-  val pp : Caml.Format.formatter -> t -> unit m
+  val pretty : Caml.Format.formatter -> t -> unit m
 end
 
 module type TermModel = sig
@@ -34,9 +35,12 @@ module Pure (S : Signature) : sig
     with type 'a f = 'a S.t
 end = struct
   type 'a f = 'a S.t
+  [@@deriving (compare, hash, sexp, show)]
+
   type t =
     | Var of int
     | In of t S.t
+  [@@deriving (compare, hash, sexp, show)]
 
   let var i = Var i
 
@@ -65,9 +69,8 @@ end = struct
     | Subst.Ext (_, t) -> if ix = 0 then t else proj sb (ix - 1)
     | Subst.Wk -> Var (ix + 1)
 
-
-  let rec pp fmt t =
+  let rec pretty fmt t =
     match t with
     | Var i -> Fmt.pf fmt "#%i" i
-    | In tf -> S.pp pp fmt tf
+    | In tf -> S.pretty pretty fmt tf
 end

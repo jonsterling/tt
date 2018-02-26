@@ -3,11 +3,14 @@ type ('a, 's) f =
   | Wk
   | Cmp of 's * 's
   | Ext of 's * 'a
+[@@deriving (compare, hash, sexp, show)]
 
 type 'a t =
   | In of ('a, 'a t) f
+[@@deriving (compare, hash, sexp, show)]
 
 type ('a, 'b) tensor = 'a * 'b t
+[@@deriving (compare, sexp, show)]
 
 let out s =
   let In sf = s in

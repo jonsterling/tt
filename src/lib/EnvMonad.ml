@@ -1,13 +1,16 @@
 module type EnvMonad = sig
   type key
+  [@@deriving (compare, sexp, show)]
 
   (* Semantically, 'jdg should be a poset; we refer to its order as the "information order". *)
   type ('a, 'jdg) t
+  [@@deriving (compare, sexp, show)]
 
   (* This is intended to be abstract. Sometimes to interface with other code outside the monad,
      we need a way to turn a monadic action into a value, inside the monad. This is helpful
      when dealing with higher order functions, such as in the case of pretty-printers. *)
   type 'jdg env
+  [@@deriving (compare, sexp, show)]
 
   val get_env : ('jdg env, 'jdg) t
 

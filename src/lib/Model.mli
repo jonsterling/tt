@@ -6,6 +6,7 @@ module type Model = sig
 
   (* algebra for the signature endofunctor *)
   type t
+  [@@deriving (compare, sexp, show)]
 
   val into : t f -> t
 
@@ -21,7 +22,7 @@ module type EffectfulTermModel = sig
 
   val out : t -> [`F of t f | `V of int] m
 
-  val pp : Caml.Format.formatter -> t -> unit m
+  val pretty : Caml.Format.formatter -> t -> unit m
 end
 
 module type TermModel = sig

@@ -13,6 +13,7 @@ module LC = struct
     | Sg of 'a * 'a
     | Unit
     | Univ
+  [@@deriving (compare, hash, sexp, show)]
 
   let map ~f t =
     match t with
@@ -24,7 +25,7 @@ module LC = struct
     | Unit -> Unit
     | Univ -> Univ
 
-  let pp ~ih fmt t =
+  let pretty ~ih fmt t =
     match t with
     | Lam a -> Fmt.pf fmt "@[(lam@ %a)@]" ih a
     | App (a0, a1) -> Fmt.pf fmt "@[(app@ %a@ %a)@]" ih a0 ih a1
