@@ -1,27 +1,33 @@
-type ('a, 's) f =
-  | Id
-  | Wk
-  | Cmp of 's * 's
-  | Ext of 's * 'a
-[@@deriving (compare, hash, sexp, show)]
+module F = struct
+  type ('a, 's) t =
+    | Id
+    | Wk
+    | Cmp of 's * 's
+    | Ext of 's * 'a
+  [@@deriving (compare, hash, sexp, show)]
+end
 
-type 'a t =
-  | In of ('a, 'a t) f
-[@@deriving (compare, hash, sexp, show)]
+module T = struct
+  type 'a t =
+    | In of ('a, 'a t) F.t
+  [@@deriving (compare, hash, sexp, show)]
+end
 
-type ('a, 'b) tensor = 'a * 'b t
-[@@deriving (compare, hash, sexp, show)]
+module Tensor = struct
+  type ('a, 'b) t = 'a * 'b T.t
+  [@@deriving (compare, hash, sexp, show)]
+end
 
 let out s =
-  let In sf = s in
+  let T.In sf = s in
   sf
 
-let into sf = In sf
+let into sf = T.In sf
 
-let id = into Id
+let id = into F.Id
 
-let wk = into Wk
+let wk = into F.Wk
 
-let cmp s2 s1 = into @@ Cmp (s2, s1)
+let cmp s2 s1 = into @@ F.Cmp (s2, s1)
 
-let ext s t = into @@ Ext (s, t)
+let ext s t = into @@ F.Ext (s, t)

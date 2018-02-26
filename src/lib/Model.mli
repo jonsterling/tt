@@ -1,36 +1,46 @@
 open Signature
 
+module Id : sig
+  type 'a t = 'a
+end
+
 module type Model = sig
-  (* signature endofunctor *)
-  type 'a f
+  module F : sig
+    (* signature endofunctor *)
+    type 'a t
+  end
 
-  (* algebra for the signature endofunctor *)
-  type t
-  [@@deriving (compare, sexp, show)]
+  module T : sig
+    (* algebra for the signature endofunctor *)
+    type t
+    [@@deriving (compare, sexp, show)]
+  end
 
-  val into : t f -> t
+  val into : T.t F.t -> T.t
 
-  val var : int -> t
+  val var : int -> T.t
 
-  val subst : (t, t) Subst.tensor -> t
+  val subst : (T.t, T.t) Subst.Tensor.t -> T.t
 end
 
 module type EffectfulTermModel = sig
   include Model
 
-  type 'a m
+  module M : sig
+    type 'a t
+  end
 
-  val out : t -> [`F of t f | `V of int] m
+  val out : T.t -> [`F of T.t F.t | `V of int] M.t
 
-  val pretty : Caml.Format.formatter -> t -> unit m
+  val pretty : Caml.Format.formatter -> T.t -> unit M.t
 end
 
 module type TermModel = sig
   include EffectfulTermModel
-    with type 'a m := 'a
+    with module M = Id
 end
 
-module Pure (S : Signature) : sig
+module Pure (Sig : Signature) : sig
   include TermModel
-    with type 'a f = 'a S.t
+    with module F = Sig
 end

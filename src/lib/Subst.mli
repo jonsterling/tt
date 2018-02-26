@@ -1,24 +1,30 @@
-type ('a, 's) f =
-  | Id
-  | Wk
-  | Cmp of 's * 's
-  | Ext of 's * 'a
-[@@deriving (compare, hash, sexp, show)]
+module F : sig
+  type ('a, 's) t =
+    | Id
+    | Wk
+    | Cmp of 's * 's
+    | Ext of 's * 'a
+  [@@deriving (compare, hash, sexp, show)]
+end
 
-type 'a t
-[@@deriving (compare, hash, sexp, show)]
+module T : sig
+  type 'a t
+  [@@deriving (compare, hash, sexp, show)]
+end
 
-type ('a, 'b) tensor = 'a * 'b t
-[@@deriving (compare, hash, sexp, show)]
+module Tensor : sig
+  type ('a, 'b) t = 'a * 'b T.t
+  [@@deriving (compare, hash, sexp, show)]
+end
 
-val into : ('a, 'a t) f -> 'a t
+val into : ('a, 'a T.t) F.t -> 'a T.t
 
-val out : 'a t -> ('a, 'a t) f
+val out : 'a T.t -> ('a, 'a T.t) F.t
 
-val id : 'a t
+val id : 'a T.t
 
-val wk : 'a t
+val wk : 'a T.t
 
-val cmp : 'a t -> 'a t -> 'a t
+val cmp : 'a T.t -> 'a T.t -> 'a T.t
 
-val ext : 'a t -> 'a -> 'a t
+val ext : 'a T.t -> 'a -> 'a T.t

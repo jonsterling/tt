@@ -3,36 +3,46 @@ open Model
 open EnvMonad
 
 (* This is a model with references to holes *)
-module ProofState (M : EnvMonad) (S : Signature) : sig
-  type t
-  [@@deriving (compare, sexp, show)]
+module ProofState (Mon : EnvMonad) (Sig : Signature) : sig
+  module T : sig
+    type t
+    [@@deriving (compare, sexp, show)]
+  end
 
-  (* A subject is Ask if it has not been refined yet; it is Ret if it has been refined.
-     The information order is that [Ask <= Ret t]. *)
-  type subject =
-    | Ask
-    | Ret of t
-  [@@deriving (compare, sexp, show)]
+  module Subject : sig
+    (* A subject is Ask if it has not been refined yet; it is Ret if it has been refined.
+       The information order is that [Ask <= Ret t]. *)
+    type t =
+      | Ask
+      | Ret of T.t
+    [@@deriving (compare, sexp, show)]
+  end
 
-  type jdg = {
-    cx : t list;
-    ty : t;
-    hole : subject;
-  }
-  [@@deriving (compare, sexp, show)]
+  module Jdg : sig
+    type t = {
+      cx : T.t list;
+      ty : T.t;
+      hole : Subject.t;
+    }
+    [@@deriving (compare, sexp, show)]
+  end
 
-  type 'a term_f = 'a S.t
-  [@@deriving (compare, sexp, show)]
+  module TermF : sig
+    type 'a t = 'a Sig.t
+    [@@deriving (compare, sexp, show)]
+  end
 
-  type 'a m = ('a, jdg) M.t
-  [@@deriving (compare, sexp, show)]
+  module M : sig
+    type 'a t = ('a, Jdg.t) Mon.T.t
+    [@@deriving (compare, sexp, show)]
+  end
 
   include EffectfulTermModel
-    with type 'a f := 'a term_f
-     and type 'a m := 'a m
-     and type t := t
+    with module F := TermF
+     and module M := M
+     and module T := T
 
-  val hole : M.key -> t
+  val hole : Mon.Key.t -> T.t
 
-  val out : t -> [`F of t term_f | `V of int] m
+  val out : T.t -> [`F of T.t TermF.t | `V of int] M.t
 end

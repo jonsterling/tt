@@ -46,18 +46,18 @@ module Tac (Env : EnvMonad) = struct
   end
 
   let ask cx ty =
-    let%bind key = Env.alloc E.{cx; ty; hole = E.Ask} in
+    let%bind key = Env.alloc E.Jdg.{cx; ty; hole = E.Subject.Ask} in
     Env.return (key, E.hole key)
 
   let fill key tm =
     match%bind Env.find key with
-    | E.{cx; ty; hole = E.Ask} ->
-      Env.improve key E.{cx; ty; hole = E.Ret tm}
+    | E.Jdg.{cx; ty; hole = E.Subject.Ask} ->
+      Env.improve key E.Jdg.{cx; ty; hole = E.Subject.Ret tm}
     | _ -> failwith "fill"
 
   let match_hole key =
     match%bind Env.find key with
-    | E.{cx; ty; hole = E.Ask} ->
+    | E.Jdg.{cx; ty; hole = E.Subject.Ask} ->
       let%bind pat = E.out ty in
       Env.return (cx, pat)
     | _ -> failwith "match_hole"
