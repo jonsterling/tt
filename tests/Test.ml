@@ -78,5 +78,4 @@ module Tac (Env : EnvMonad) = struct
       let%bind _ = fill key @@ E.into @@ LC.Pair (t1, t2) in
       Env.return (k1, k2)
     | _ -> failwith "pair"
-
 end
