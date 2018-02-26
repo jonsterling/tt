@@ -16,7 +16,7 @@ sig
 
   type jdg = {cx : t list; ty : t; hole : subject}
   type 'a term_f
-  type 'a m = (jdg, 'a) Env.t
+  type 'a m = ('a, jdg) Env.t
 
   include EffectfulTermModel
     with type 'a f := 'a term_f
@@ -51,7 +51,7 @@ struct
 
   type subject = Ask | Ret of t
   type jdg = {cx : t list; ty : t; hole : subject}
-  type 'a m = (jdg, 'a) M.t
+  type 'a m = ('a, jdg) M.t
 
   let var i = Var i
 
@@ -92,22 +92,25 @@ struct
       match !r with
       | `Done t -> out t
       | `Defer (key, sb) ->
-        M.bind (M.find key) @@ fun {hole;_} ->
-        match hole with
-        | Ask -> failwith "[out]: got Ask"
-        | Ret t ->
-          let t' = subst (t, sb) in
-          r := `Done t';
-          out t'
+        M.bind (M.find key) ~f:begin fun {hole; _} ->
+          match hole with
+          | Ask -> failwith "[out]: got Ask"
+          | Ret t ->
+            let t' = subst (t, sb) in
+            r := `Done t';
+            out t'
+        end
 
   let rec pp fmt t =
-    M.bind (out t) @@ fun tf ->
-    match tf with
-    | `V i -> M.return @@ Fmt.pf fmt "#%i" i
-    | `F tf ->
-      M.bind M.get_env @@ fun env ->
-      M.return @@
-      S.pp (fun fmt t -> M.run env (pp fmt t)) fmt tf
+    M.bind (out t) ~f:begin fun tf ->
+      match tf with
+      | `V i -> M.return @@ Fmt.pf fmt "#%i" i
+      | `F tf ->
+        M.bind M.get_env ~f:begin fun env ->
+          M.return @@
+          S.pp (fun fmt t -> M.run env (pp fmt t)) fmt tf
+        end
+    end
 
   let hole key =
     Ref (ref @@ `Defer (key, Subst.id))
