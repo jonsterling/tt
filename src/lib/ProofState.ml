@@ -71,7 +71,7 @@ module ProofState (M : EnvMonad) (S : Signature) = struct
       match !r with
       | `Done t -> out t
       | `Defer (key, sb) ->
-        M.bind (M.find key) ~f:begin fun {hole; _} ->
+        M.bind (M.find key) ~f:begin fun {hole} ->
           match hole with
           | Ask -> failwith "[out]: got Ask"
           | Ret t ->

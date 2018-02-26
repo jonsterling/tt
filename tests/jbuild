@@ -2,8 +2,8 @@
 
 (executables
  ((names (test))
-  (flags (:standard -w +a-3-4-6-30-32-39-41-42-44-48-60 -warn-error +a -open Base))
-  (ocamlopt_flags (:standard -w +a-3-4-6-30-32-39-41-42-44-48-60 -warn-error +a -open Base -O3))
+  (flags (:standard -w +a-3-4-6-9-30-32-39-41-42-44-48-60 -warn-error +a -open Base))
+  (ocamlopt_flags (:standard -w +a-3-4-6-9-30-32-39-41-42-44-48-60 -warn-error +a -open Base -O3))
   (libraries (tt))
   (preprocess (pps (ppx_deriving.std ppx_jane ppx_driver.runner)))))
 
