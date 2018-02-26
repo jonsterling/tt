@@ -9,7 +9,7 @@ type 'a t
 [@@deriving (compare, hash, sexp, show)]
 
 type ('a, 'b) tensor = 'a * 'b t
-[@@deriving (compare, sexp, show)]
+[@@deriving (compare, hash, sexp, show)]
 
 val into : ('a, 'a t) f -> 'a t
 
