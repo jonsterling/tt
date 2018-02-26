@@ -27,11 +27,11 @@ struct
 
   let pp ~ih fmt t =
     match t with
-    | Lam a -> Fmt.pf fmt "(lam %a)" ih a
-    | App (a0, a1) -> Fmt.pf fmt "(app %a %a)" ih a0 ih a1
-    | Pair (a0, a1) -> Fmt.pf fmt "(cons %a %a)" ih a0 ih a1
-    | Pi (dom, cod) -> Fmt.pf fmt "(-> %a %a)" ih dom ih cod
-    | Sg (dom, cod) -> Fmt.pf fmt "(* %a %a)" ih dom ih cod
+    | Lam a -> Fmt.pf fmt "@[(lam@ %a)@]" ih a
+    | App (a0, a1) -> Fmt.pf fmt "@[(app@ %a@ %a)@]" ih a0 ih a1
+    | Pair (a0, a1) -> Fmt.pf fmt "@[(cons@ %a@ %a)@]" ih a0 ih a1
+    | Pi (dom, cod) -> Fmt.pf fmt "@[(->@ %a@ %a)@]" ih dom ih cod
+    | Sg (dom, cod) -> Fmt.pf fmt "@[(*@ %a@ %a)@]" ih dom ih cod
     | Unit -> Fmt.pf fmt "unit"
     | Univ -> Fmt.pf fmt "univ"
 end
