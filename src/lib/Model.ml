@@ -1,7 +1,5 @@
 open Signature
 
-module Id = Monad.Ident
-
 module type Model = sig
   module F : sig
     (* signature endofunctor *)
@@ -29,7 +27,7 @@ end
 
 module type TermModel = sig
   include EffectfulTermModel
-    with module M = Id
+    with module M = Monad.Ident
 end
 
 module Pure (Sig : Signature) : sig
@@ -45,7 +43,7 @@ end = struct
     [@@deriving (compare, hash, sexp, show)]
   end
 
-  module M = Id
+  module M = Monad.Ident
 
   let var i = T.Var i
 
@@ -85,7 +83,7 @@ module ExplicitSubst (Sig : Signature) : sig
     with module F = Sig
 end = struct
   module F = Sig
-  module M = Id
+  module M = Monad.Ident
 
   module T = struct
     type node =
