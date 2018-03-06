@@ -17,9 +17,7 @@ module type Model = sig
   end
 
   val into : T.t F.t -> T.t
-
   val var : int -> T.t
-
   val subst : (T.t, T.t) Subst.Tensor.t -> T.t
 end
 
@@ -31,7 +29,6 @@ module type EffectfulTermModel = sig
   end
 
   val out : T.t -> [`F of T.t F.t | `V of int] M.t
-
   val pretty : Caml.Format.formatter -> T.t -> unit M.t
 end
 
