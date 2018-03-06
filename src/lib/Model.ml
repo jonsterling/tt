@@ -17,9 +17,7 @@ module type Model = sig
   end
 
   val into : T.t F.t -> T.t
-
   val var : int -> T.t
-
   val subst : (T.t, T.t) Subst.Tensor.t -> T.t
 end
 
