@@ -32,10 +32,8 @@ module ProofState (Mon : EnvMonad) (Sig : Signature) : sig
     [@@deriving (compare, sexp, show)]
   end
 
-  module M : sig
-    type 'a t = ('a, Jdg.t) Mon.T.t
-    [@@deriving (compare, sexp, show)]
-  end
+  module M : Monad.S
+    with type 'a t = ('a, Jdg.t) Mon.T.t
 
   include EffectfulTermModel
     with module F := TermF

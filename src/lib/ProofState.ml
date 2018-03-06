@@ -37,9 +37,18 @@ module ProofState (Mon : EnvMonad) (Sig : Signature) = struct
     [@@deriving (compare, sexp, show)]
   end
 
-  module M = struct
+  module M_Basic =
+  struct
     type 'a t = ('a, Jdg.t) Mon.T.t
-    [@@deriving (compare, sexp, show)]
+    let return = Mon.return
+    let map = `Define_using_bind
+    let bind = Mon.bind
+  end
+
+  module M =
+  struct
+    type 'a t = 'a M_Basic.t
+    include Monad.Make (M_Basic)
   end
 
   let var i = T.Var i

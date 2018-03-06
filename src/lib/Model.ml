@@ -1,8 +1,6 @@
 open Signature
 
-module Id = struct
-  type 'a t = 'a
-end
+module Id = Monad.Ident
 
 module type Model = sig
   module F : sig
@@ -24,12 +22,8 @@ end
 module type EffectfulTermModel = sig
   include Model
 
-  module M : sig
-    type 'a t
-  end
-
+  module M : Monad.S
   val out : T.t -> [`F of T.t F.t | `V of int] M.t
-
   val pretty : Caml.Format.formatter -> T.t -> unit M.t
 end
 
