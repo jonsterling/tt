@@ -79,7 +79,7 @@ end = struct
     match Subst.out sb with
     | Subst.F.Id -> T.Var ix
     | Subst.F.Cmp (sb1, sb0) -> subst (proj sb0 ix, sb1)
-    | Subst.F.Ext (_, t) -> if ix = 0 then t else proj sb (ix - 1)
+    | Subst.F.Ext (sb, t) -> if ix = 0 then t else proj sb (ix - 1)
     | Subst.F.Wk -> T.Var (ix + 1)
 
   let rec pretty fmt t =
