@@ -88,7 +88,6 @@ end = struct
     | T.In tf -> Sig.pretty pretty fmt tf
 end
 
-(* TODO: memoize substitution results *)
 module ExplicitSubst (Sig : Signature) : sig
   include TermModel
     with module F = Sig
@@ -99,30 +98,41 @@ end = struct
   module T = struct
     type node =
       | Var of int
-      | In of t Sig.t
+      | In of closure ref Sig.t
 
-    and t = Subst of (node, t) Subst.Tensor.t
-    [@@deriving (compare, hash, sexp, show)]
+    and closure =
+      | Ret of node
+      | Clo of (node, closure ref) Subst.Tensor.t
+    [@@deriving (compare, sexp, show)]
+
+    type t = closure ref
+    [@@deriving (compare, sexp, show)]
   end
 
   let var i =
-    T.Subst (T.Var i, Subst.id)
+    ref (T.Ret (T.Var i))
 
   let rec weaken n sb =
     match n with
     | 0 -> sb
     | _ -> weaken (n - 1) @@ Subst.ext (Subst.cmp sb Subst.wk) (var 0)
 
-  let into tf = T.Subst (T.In tf, Subst.id)
+  let into tf = ref (T.Ret (T.In tf))
 
   let subst (t, sb) =
-    match Subst.out sb, t with
+    match Subst.out sb, !t with
     | Subst.F.Id, _ -> t
-    | _, T.Subst (t, sb') -> T.Subst (t, Subst.cmp sb sb')
+    | _, T.Clo (t, sb') -> ref (T.Clo (t, Subst.cmp sb sb'))
+    | _, T.Ret t -> ref (T.Clo (t, sb))
 
   let rec unwrap : T.t -> T.node =
-    function T.Subst tensor ->
-      subst_node tensor
+    fun r ->
+      match !r with
+      | T.Clo tensor ->
+        let node = subst_node tensor in
+        r := T.Ret node;
+        node
+      | T.Ret node -> node
 
   and subst_ix : (int, T.t) Subst.Tensor.t -> T.node =
     fun (ix, sb) ->
@@ -151,5 +161,4 @@ end = struct
     match unwrap t with
     | T.Var ix -> Fmt.pf fmt "#%i" ix
     | T.In tf -> Sig.pretty pretty fmt tf
-
 end
