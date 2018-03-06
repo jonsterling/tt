@@ -41,3 +41,9 @@ module Pure (Sig : Signature) : sig
   include TermModel
     with module F = Sig
 end
+
+(* As example of the flexibility of this system *)
+module ExplicitSubst (Sig : Signature) : sig
+  include TermModel
+    with module F = Sig
+end

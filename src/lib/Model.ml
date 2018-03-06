@@ -87,3 +87,69 @@ end = struct
     | T.Var i -> Fmt.pf fmt "#%i" i
     | T.In tf -> Sig.pretty pretty fmt tf
 end
+
+(* TODO: memoize substitution results *)
+module ExplicitSubst (Sig : Signature) : sig
+  include TermModel
+    with module F = Sig
+end = struct
+  module F = Sig
+  module M = Id
+
+  module T = struct
+    type node =
+      | Var of int
+      | In of t Sig.t
+
+    and t = Subst of (node, t) Subst.Tensor.t
+    [@@deriving (compare, hash, sexp, show)]
+  end
+
+  let var i =
+    T.Subst (T.Var i, Subst.id)
+
+  let rec weaken n sb =
+    match n with
+    | 0 -> sb
+    | _ -> weaken (n - 1) @@ Subst.ext (Subst.cmp sb Subst.wk) (var 0)
+
+  let into tf = T.Subst (T.In tf, Subst.id)
+
+  let subst (t, sb) =
+    match Subst.out sb, t with
+    | Subst.F.Id, _ -> t
+    | _, T.Subst (t, sb') -> T.Subst (t, Subst.cmp sb sb')
+
+  let rec unwrap : T.t -> T.node =
+    function T.Subst tensor ->
+      subst_node tensor
+
+  and subst_ix : (int, T.t) Subst.Tensor.t -> T.node =
+    fun (ix, sb) ->
+      match Subst.out sb with
+      | Subst.F.Id ->
+        T.Var ix
+      | Subst.F.Cmp (sb1, sb0) ->
+        subst_node (subst_ix (ix, sb0), sb1)
+      | Subst.F.Ext (sb, t) ->
+        if ix = 0 then unwrap t else subst_ix (ix - 1, sb)
+      | Subst.F.Wk ->
+        T.Var (ix + 1)
+
+  and subst_node : (T.node, T.t) Subst.Tensor.t -> T.node =
+    fun (node, sb) ->
+      match node with
+      | T.In tf -> T.In (Sig.map (fun i a -> subst (a, weaken i sb)) tf)
+      | T.Var ix -> subst_ix (ix, sb)
+
+  let out t =
+    match unwrap t with
+    | T.Var ix -> `V ix
+    | T.In tf -> `F tf
+
+  let rec pretty fmt t =
+    match unwrap t with
+    | T.Var ix -> Fmt.pf fmt "#%i" ix
+    | T.In tf -> Sig.pretty pretty fmt tf
+
+end
