@@ -14,12 +14,15 @@ depends: [
   "jbuilder" {build & = "1.0+beta17"}
   "lwt" {= "3.2.1"}
   "menhir" {>= "20171013"}
+  "ppx_deriving" {= "4.2.1"}
   "ppx_expect" {= "v0.10.0"}
   "ppx_hash" {= "v0.10.0"}
   "ppx_jane" {= "v0.10.0"}
   "ppx_metaquot" {= "v0.10.0"}
   "ppx_traverse" {= "v0.10.0"}
   "topkg" {= "0.9.1"}
+  "uuseg" {= "10.0.0"}
+  "uutf" {= "1.0.1"}
 ]
 build: [
   ["make"]
